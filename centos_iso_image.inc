@@ -46,6 +46,7 @@ openstack-keystone
 # distributedcloud
 distributedcloud-dcmanager
 distributedcloud-dcorch
+distributedcloud-dcdbsync
 
 # distributedcloud-client
 distributedcloud-client-dcmanagerclient
