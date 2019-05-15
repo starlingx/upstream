@@ -1,8 +1,8 @@
 BUILDER=loci
 LABEL=stx-nova
 PROJECT=nova
-PROJECT_REPO=https://github.com/openstack/nova.git
-PROJECT_REF=stable/stein
+PROJECT_REPO=https://github.com/starlingx-staging/stx-nova
+PROJECT_REF=stx/stein.1
 PIP_PACKAGES="pycrypto httplib2 pylint python-ironicclient"
 DIST_PACKAGES="openssh-clients openssh-server libvirt e2fsprogs"
 PROFILES="fluent nova ceph linuxbridge openvswitch configdrive qemu apache"
