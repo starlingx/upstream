@@ -1,0 +1,324 @@
+From d22ad4870b78f74298189e383697ae6163ef49d7 Mon Sep 17 00:00:00 2001
+From: Kevin Smith <kevin.smith@windriver.com>
+Date: Wed, 17 Jul 2019 15:13:44 -0400
+Subject: [PATCH 1/1] helm chart changes for stx monitor
+
+---
+ stable/elasticsearch/values.yaml           |  2 +-
+ stable/filebeat/templates/configmap.yaml   | 34 ++++++++++++++++++++++++++++++
+ stable/filebeat/templates/daemonset.yaml   | 15 +++++++++++++
+ stable/filebeat/values.yaml                |  9 ++------
+ stable/kibana/values.yaml                  |  4 ++--
+ stable/logstash/templates/ingress.yaml     |  2 +-
+ stable/logstash/templates/statefulset.yaml |  7 +++---
+ stable/logstash/values.yaml                |  3 ++-
+ stable/metricbeat/templates/configmap.yaml | 34 ++++++++++++++++++++++++++++++
+ stable/metricbeat/templates/daemonset.yaml | 26 +++++++++++++++++++++++
+ stable/metricbeat/values.yaml              |  4 ++--
+ 11 files changed, 122 insertions(+), 18 deletions(-)
+ create mode 100755 stable/filebeat/templates/configmap.yaml
+ create mode 100755 stable/metricbeat/templates/configmap.yaml
+
+diff --git a/stable/elasticsearch/values.yaml b/stable/elasticsearch/values.yaml
+index bbc03dd..6dcd9b0 100644
+--- a/stable/elasticsearch/values.yaml
++++ b/stable/elasticsearch/values.yaml
+@@ -33,7 +33,7 @@ podSecurityPolicy:
+ 
+ image:
+   repository: "docker.elastic.co/elasticsearch/elasticsearch-oss"
+-  tag: "6.7.0"
++  tag: "7.2.0"
+   pullPolicy: "IfNotPresent"
+   # If specified, use these secrets to access the image
+   # pullSecrets:
+diff --git a/stable/filebeat/templates/configmap.yaml b/stable/filebeat/templates/configmap.yaml
+new file mode 100755
+index 0000000..c895965
+--- /dev/null
++++ b/stable/filebeat/templates/configmap.yaml
+@@ -0,0 +1,34 @@
++apiVersion: v1
++kind: ConfigMap
++metadata:
++  name: {{ template "filebeat.fullname" . }}
++  labels:
++    app: {{ template "filebeat.fullname" . }}
++    chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
++    release: "{{ .Release.Name }}"
++    heritage: "{{ .Release.Service }}"
++data:
++  setup-script.sh: |-
++    #!/bin/bash
++    BEAT='filebeat'
++    BEAT_VER=$($BEAT version | awk '{print $3}')
++    # check if logstash output is enabled, via crude parsing of the .yml file.
++    sed -e '/output.logstash/,/enabled:/!d' ${BEAT}.yml  | grep -i true
++    if [[ $? -eq 0 ]]; then
++       echo "logstash configured, exporting template to elasticsearch"
++       $BEAT export template > /tmp/beat.template.json
++       # remove the lifecycle section of the yaml, as elasticsearch will choke
++       # on it as oss version does not support ilm.
++       sed -i '/lifecycle/,+3d' /tmp/beat.template.json
++       curl -XPUT -H "Content-Type: application/json" http://{$STX_ELASTICSEARCH_CLIENT_SERVICE_HOST}:{$STX_ELASTICSEARCH_CLIENT_SERVICE_PORT_HTTP}/_template/{$BEAT}-{$BEAT_VER} -d@/tmp/beat.template.json
++       # prime the index as a write index
++       curl -XPUT -H "Content-Type: application/json" -d   "{
++          \"aliases\": {
++             \"{BEAT}-{$BEAT_VER}\": {
++                \"is_write_index\": \"true\"
++             }
++          }
++       }" http://{$STX_ELASTICSEARCH_CLIENT_SERVICE_HOST}:{$STX_ELASTICSEARCH_CLIENT_SERVICE_PORT_HTTP}/{$BEAT}-{$BEAT_VER}-000001
++    else
++        echo "logstash not configured, not exporting template, should be done for us."
++    fi
+diff --git a/stable/filebeat/templates/daemonset.yaml b/stable/filebeat/templates/daemonset.yaml
+index 2b8e265..00a5519 100644
+--- a/stable/filebeat/templates/daemonset.yaml
++++ b/stable/filebeat/templates/daemonset.yaml
+@@ -38,6 +38,21 @@ spec:
+       priorityClassName: "{{ .Values.priorityClassName }}"
+ {{- end }}
+       initContainers:
++      - name: "setup-script"
++        image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
++        imagePullPolicy: {{ .Values.image.pullPolicy }}
++        command:
++        - /bin/bash
++        - -c
++        - /usr/share/filebeat/setup-script.sh
++        volumeMounts:
++        - mountPath: /usr/share/filebeat/setup-script.sh
++          name: setupscript 
++          subPath: setup-script.sh
++        - name: filebeat-config
++          mountPath: /usr/share/filebeat/filebeat.yml
++          readOnly: true
++          subPath: filebeat.yml
+ {{- if .Values.indexTemplateLoad }}
+       - name: "load-es-template"
+         image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+diff --git a/stable/filebeat/values.yaml b/stable/filebeat/values.yaml
+index 1907ffa..b4b766f 100644
+--- a/stable/filebeat/values.yaml
++++ b/stable/filebeat/values.yaml
+@@ -1,15 +1,10 @@
+ image:
+   repository: docker.elastic.co/beats/filebeat-oss
+-  tag: 6.7.0
++  tag: 7.2.0
+   pullPolicy: IfNotPresent
+ 
+ config:
+   filebeat.config:
+-    prospectors:
+-      # Mounted `filebeat-prospectors` configmap:
+-      path: ${path.config}/prospectors.d/*.yml
+-      # Reload prospectors configs as they change:
+-      reload.enabled: false
+     modules:
+       path: ${path.config}/modules.d/*.yml
+       # Reload module configs as they change:
+@@ -18,7 +13,7 @@ config:
+   processors:
+     - add_cloud_metadata:
+ 
+-  filebeat.prospectors:
++  filebeat.inputs:
+     - type: log
+       enabled: true
+       paths:
+diff --git a/stable/kibana/values.yaml b/stable/kibana/values.yaml
+index a3310f9..4ce4b2a 100644
+--- a/stable/kibana/values.yaml
++++ b/stable/kibana/values.yaml
+@@ -1,6 +1,6 @@
+ image:
+   repository: "docker.elastic.co/kibana/kibana-oss"
+-  tag: "6.7.0"
++  tag: "7.2.0"
+   pullPolicy: "IfNotPresent"
+ 
+ testFramework:
+@@ -25,7 +25,7 @@ files:
+     ## Default Kibana configuration from kibana-docker.
+     server.name: kibana
+     server.host: "0"
+-    elasticsearch.url: http://elasticsearch:9200
++    elasticsearch.hosts: http://elasticsearch:9200
+ 
+     ## Custom config properties below
+     ## Ref: https://www.elastic.co/guide/en/kibana/current/settings.html
+diff --git a/stable/logstash/templates/ingress.yaml b/stable/logstash/templates/ingress.yaml
+index d924504..0e26f89 100644
+--- a/stable/logstash/templates/ingress.yaml
++++ b/stable/logstash/templates/ingress.yaml
+@@ -33,6 +33,6 @@ spec:
+           - path: {{ $ingressPath }}
+             backend:
+               serviceName: {{ $fullName }}
+-              servicePort: http
++              servicePort: 9600
+   {{- end }}
+ {{- end }}
+diff --git a/stable/logstash/templates/statefulset.yaml b/stable/logstash/templates/statefulset.yaml
+index d2bbc32..cca0050 100644
+--- a/stable/logstash/templates/statefulset.yaml
++++ b/stable/logstash/templates/statefulset.yaml
+@@ -25,11 +25,8 @@ spec:
+         {{ $key }}: {{ $value | quote }}
+         {{- end }}
+       {{- end }}
+-      annotations:
+-        checksum/patterns: {{ include (print $.Template.BasePath "/patterns-config.yaml") . | sha256sum }}
+-        checksum/templates: {{ include (print $.Template.BasePath "/files-config.yaml") . | sha256sum }}
+-        checksum/pipeline: {{ include (print $.Template.BasePath "/pipeline-config.yaml") . | sha256sum }}
+       {{- if .Values.podAnnotations }}
++      annotations:
+         ## Custom pod annotations
+         {{- range $key, $value := .Values.podAnnotations }}
+         {{ $key }}: {{ $value | quote }}
+@@ -46,6 +43,8 @@ spec:
+       imagePullSecrets:
+ {{ toYaml .Values.image.pullSecrets | indent 8 }}
+       {{- end }}
++      hostNetwork: true
++      dnsPolicy: ClusterFirstWithHostNet
+       containers:
+ 
+         ## logstash
+diff --git a/stable/logstash/values.yaml b/stable/logstash/values.yaml
+index a9eb158..9a452b1 100644
+--- a/stable/logstash/values.yaml
++++ b/stable/logstash/values.yaml
+@@ -10,7 +10,7 @@ terminationGracePeriodSeconds: 30
+ 
+ image:
+   repository: docker.elastic.co/logstash/logstash-oss
+-  tag: 6.7.0
++  tag: 7.2.0
+   pullPolicy: IfNotPresent
+   ## Add secrets manually via kubectl on kubernetes cluster and reference here
+   #  pullSecrets:
+@@ -67,6 +67,7 @@ ingress:
+   path: /
+   hosts:
+     - logstash.cluster.local
++  servicePort: 5044
+   tls: []
+   #  - secretName: logstash-tls
+   #    hosts:
+diff --git a/stable/metricbeat/templates/configmap.yaml b/stable/metricbeat/templates/configmap.yaml
+new file mode 100755
+index 0000000..21890b4
+--- /dev/null
++++ b/stable/metricbeat/templates/configmap.yaml
+@@ -0,0 +1,34 @@
++apiVersion: v1
++kind: ConfigMap
++metadata:
++  name: {{ template "metricbeat.fullname" . }}
++  labels:
++    app: {{ template "metricbeat.fullname" . }}
++    chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
++    release: "{{ .Release.Name }}"
++    heritage: "{{ .Release.Service }}"
++data:
++  setup-script.sh: |-
++    #!/bin/bash
++    BEAT='metricbeat'
++    BEAT_VER=$($BEAT version | awk '{print $3}')
++    # check if logstash output is enabled, via crude parsing of the .yml file.
++    sed -e '/output.logstash/,/enabled:/!d' ${BEAT}.yml  | grep -i true
++    if [[ $? -eq 0 ]]; then
++       echo "logstash configured, exporting template to elasticsearch"
++       $BEAT export template > /tmp/beat.template.json
++       # remove the lifecycle section of the yaml, as elasticsearch will choke
++       # on it as oss version does not support ilm.
++       sed -i '/lifecycle/,+3d' /tmp/beat.template.json
++       curl -XPUT -H "Content-Type: application/json" http://{$STX_ELASTICSEARCH_CLIENT_SERVICE_HOST}:{$STX_ELASTICSEARCH_CLIENT_SERVICE_PORT_HTTP}/_template/{$BEAT}-{$BEAT_VER} -d@/tmp/beat.template.json
++       # prime the index as a write index
++       curl -XPUT -H "Content-Type: application/json" -d   "{
++          \"aliases\": {
++             \"{BEAT}-{$BEAT_VER}\": {
++                \"is_write_index\": \"true\"
++             }
++          }
++       }" http://{$STX_ELASTICSEARCH_CLIENT_SERVICE_HOST}:{$STX_ELASTICSEARCH_CLIENT_SERVICE_PORT_HTTP}/{$BEAT}-{$BEAT_VER}-000001
++    else
++        echo "logstash not configured, not exporting template, should be done for us."
++    fi
+diff --git a/stable/metricbeat/templates/daemonset.yaml b/stable/metricbeat/templates/daemonset.yaml
+index eadfb96..e3d7437 100644
+--- a/stable/metricbeat/templates/daemonset.yaml
++++ b/stable/metricbeat/templates/daemonset.yaml
+@@ -32,6 +32,23 @@ spec:
+   {{- end }}
+ {{- end }}
+     spec:
++      initContainers:
++      - name: "setup-script"
++        image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
++        imagePullPolicy: {{ .Values.image.pullPolicy }}
++        command:
++        - /bin/bash
++        - -c
++        - /usr/share/metricbeat/setup-script.sh
++        volumeMounts:
++        - mountPath: /usr/share/metricbeat/setup-script.sh
++          name: setupscript
++          subPath: setup-script.sh
++        - name: config
++          mountPath: /usr/share/metricbeat/metricbeat.yml
++          readOnly: true
++          subPath: metricbeat.yml
++        env:
+       containers:
+       - name: {{ .Chart.Name }}
+         image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+@@ -62,6 +79,7 @@ spec:
+         securityContext:
+           runAsUser: 0
+         resources:
++
+ {{- if .Values.daemonset.resources }}
+ {{ toYaml .Values.daemonset.resources | indent 10 }}
+ {{- else if .Values.resources }}
+@@ -85,6 +103,10 @@ spec:
+           readOnly: true
+         - name: dockersock
+           mountPath: /var/run/docker.sock
++#Mount the script so we can see it from running containter
++        - mountPath: /usr/share/metricbeat/setup-script.sh
++          name: setupscript
++          subPath: setup-script.sh
+ {{- if .Values.extraVolumeMounts }}
+ {{ toYaml .Values.extraVolumeMounts | indent 8 }}
+ {{- end }}
+@@ -108,6 +130,10 @@ spec:
+       - name: dockersock
+         hostPath:
+           path: /var/run/docker.sock
++      - name: setupscript
++        configMap:
++          name: {{ template "metricbeat.fullname" . }}
++          defaultMode: 0755
+ {{- if .Values.extraVolumes }}
+ {{ toYaml .Values.extraVolumes | indent 6 }}
+ {{- end }}
+diff --git a/stable/metricbeat/values.yaml b/stable/metricbeat/values.yaml
+index 5094639..2908a1b 100644
+--- a/stable/metricbeat/values.yaml
++++ b/stable/metricbeat/values.yaml
+@@ -1,6 +1,6 @@
+ image:
+-  repository: docker.elastic.co/beats/metricbeat
+-  tag: 6.7.0
++  repository: docker.elastic.co/beats/metricbeat-oss
++  tag: 7.2.0
+   pullPolicy: IfNotPresent
+ 
+ # The instances created by daemonset retrieve most metrics from the host
+-- 
+1.8.3.1
+

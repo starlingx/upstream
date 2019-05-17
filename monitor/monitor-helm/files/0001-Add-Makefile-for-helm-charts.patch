@@ -1,0 +1,62 @@
+From c116dce67296baa7b31cf59a68102b88e008db30 Mon Sep 17 00:00:00 2001
+From: John Kung <john.kung@windriver.com>
+Date: Thu, 9 May 2019 11:08:48 -0400
+Subject: [PATCH 1/1] Add Makefile for helm charts
+
+---
+ stable/Makefile | 43 +++++++++++++++++++++++++++++++++++++++++++
+ 1 file changed, 43 insertions(+)
+ create mode 100644 stable/Makefile
+
+diff --git a/stable/Makefile b/stable/Makefile
+new file mode 100644
+index 0000000..5cf4447
+--- /dev/null
++++ b/stable/Makefile
+@@ -0,0 +1,43 @@
++#
++# Copyright 2017 The Openstack-Helm Authors.
++#
++# Copyright (c) 2018 Wind River Systems, Inc.
++#
++# SPDX-License-Identifier: Apache-2.0
++#
++# It's necessary to set this because some environments don't link sh -> bash.
++SHELL := /bin/bash
++TASK  := build
++
++EXCLUDES := helm-toolkit doc tests tools logs tmp
++CHARTS := helm-toolkit $(filter-out $(EXCLUDES), $(patsubst %/.,%,$(wildcard */.)))
++
++.PHONY: $(EXCLUDES) $(CHARTS)
++
++all: $(CHARTS)
++
++$(CHARTS):
++	@if [ -d $@ ]; then \
++		echo; \
++		echo "===== Processing [$@] chart ====="; \
++		make $(TASK)-$@; \
++	fi
++
++init-%:
++	if [ -f $*/Makefile ]; then make -C $*; fi
++	if [ -f $*/requirements.yaml ]; then helm dep up $*; fi
++
++lint-%: init-%
++	if [ -d $* ]; then helm lint $*; fi
++
++build-%: lint-%
++	if [ -d $* ]; then helm package $*; fi
++
++clean:
++	@echo "Clean all build artifacts"
++	rm -f */templates/_partials.tpl */templates/_globals.tpl
++	rm -f *tgz */charts/*tgz */requirements.lock
++	rm -rf */charts */tmpcharts
++
++%:
++	@:
+-- 
+1.8.3.1
+

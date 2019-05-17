@@ -1,0 +1,8 @@
+TAR_NAME=helm-charts
+SHA=92b6289ae93816717a8453cfe62bad51cbdb8ad0
+VERSION=1.0.0
+TAR="$TAR_NAME-$SHA.tar.gz"
+
+COPY_LIST="${CGCS_BASE}/downloads/$TAR $PKG_BASE/files/* "
+
+TIS_PATCH_VER=1
