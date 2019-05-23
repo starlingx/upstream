@@ -1,12 +1,7 @@
 BUILDER=loci
 LABEL=stx-gnocchi
 PROJECT=gnocchi
-# Temporarily pointing to forked gnocchi repo
-# This is necessary to revert a specific commit that does
-# not support the older CEPH currently in starlingx.
-# Once the CEPH upgrade is complete, we can go back
-# to using the main repo
-PROJECT_REPO=https://github.com/donpenney/gnocchi.git
+PROJECT_REPO=https://github.com/gnocchixyz/gnocchi.git
 PIP_PACKAGES="pylint SQLAlchemy SQLAlchemy-Utils oslo.db keystonemiddleware gnocchiclient pymemcache psycopg2"
 DIST_PACKAGES="python-rados"
 PROFILES="gnocchi apache"
