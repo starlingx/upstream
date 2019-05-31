@@ -26,7 +26,6 @@ Source5:    python-django-horizon-logrotate.conf
 Source7:    horizon.init
 Source8:    horizon-clearsessions
 Source11:   horizon-patching-restart
-Source12:   horizon-region-exclusions.csv
 Source13:   guni_config.py
 Source14:   horizon-assets-compress
 
@@ -340,7 +339,6 @@ mkdir -p %{buildroot}%{_sysconfdir}/rc.d/init.d
 install -m 755 -D -p  %{SOURCE7} %{buildroot}%{_sysconfdir}/rc.d/init.d/horizon
 install -m 755 -D -p %{SOURCE8} %{buildroot}/%{_bindir}/horizon-clearsessions
 install -m 755 -D -p %{SOURCE11} %{buildroot}/%{_bindir}/horizon-patching-restart
-install -m 755 -D -p %{SOURCE12} %{buildroot}/opt/branding/horizon-region-exclusions.csv
 install -m 755 -D -p %{SOURCE14} %{buildroot}/%{_bindir}/horizon-assets-compress
 
 # drop httpd-conf snippet
@@ -493,7 +491,6 @@ systemctl daemon-reload >/dev/null 2>&1 || :
 
 # STX
 %dir /opt/branding
-%config(noreplace) /opt/branding/horizon-region-exclusions.csv
 %{_sysconfdir}/rc.d/init.d/horizon
 %{_bindir}/horizon-clearsessions
 %{_bindir}/horizon-patching-restart

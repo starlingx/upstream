@@ -79,15 +79,6 @@ start()
     sm-query service drbd-platform | grep enabled-active > /dev/null 2>&1
     IS_ACTIVE=$?
 
-    # Handle horizon region exclusions
-    if [ $IS_ACTIVE -eq 0 ]; then
-        # Only copy if the file has been modified
-        if ! cmp --silent ${BRANDDIR}/horizon-region-exclusions.csv ${CONFIG_PATH}/branding/horizon-region-exclusions.csv ; then
-            mkdir -p ${CONFIG_PATH}/branding
-            cp -r ${BRANDDIR}/horizon-region-exclusions.csv ${CONFIG_PATH}/branding 1>/dev/null 2>&1
-        fi
-    fi
-
     if ls ${BRANDDIR}/*.tgz 1> /dev/null 2>&1; then
         LATESTBRANDING=$(ls $BRANDDIR |grep '\.tgz$' | tail -n 1)
         if [ $IS_ACTIVE -eq 0 ]; then
