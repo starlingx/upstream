@@ -16,3 +16,4 @@ openstack/python-nova
 openstack/distributedcloud
 openstack/python-openstackclient
 openstack/python-placement
+openstack/python-platformclients
