@@ -19,6 +19,6 @@ Links
 * Code Review: `Gerrit`_
 * Bugs: `Storyboard`_
 
-.. _stx-upstream: https://git.starlingx.io/cgit/stx-upstream/
-.. _Gerrit: https://review.openstack.org/#/q/project:openstack/stx-upstream
-.. _Storyboard: https://storyboard.openstack.org/#!/project/openstack/stx-upstream
+.. _stx-upstream: https://opendev.org/starlingx/upstream
+.. _Gerrit: https://review.opendev.org/#/q/project:starlingx/upstream
+.. _Storyboard: https://storyboard.openstack.org/#!/project/starlingx/upstream
