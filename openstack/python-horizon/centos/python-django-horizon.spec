@@ -4,8 +4,8 @@ Name:       python-django-horizon
 # Liberty semver reset
 # https://review.openstack.org/#/q/I6a35fa0dda798fad93b804d00a46af80f08d475c,n,z
 Epoch:      1
-Version:    14.0.0
-Release:    2%{?_tis_dist}.%{tis_patch_ver}
+Version:    15.1.0
+Release:    1%{?_tis_dist}.%{tis_patch_ver}
 Summary:    Django application for talking to Openstack
 
 Group:      Development/Libraries
