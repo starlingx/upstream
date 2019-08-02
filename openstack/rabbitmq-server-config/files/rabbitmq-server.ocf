@@ -312,7 +312,17 @@ rabbit_start() {
         # If they are affined to all cores during initialization sequence of AIO,
         # the system will end up with many extra beam threads that are not in use.
         source /etc/init.d/cpumap_functions.sh
-        PLATFORM_CPULIST=$(get_platform_cpu_list)
+        PLATFORM_CPULIST=$(platform_expanded_cpu_list)
+        PLATFORM_CPUS=$(get_platform_cpus)
+        # Calculate thread pool size based on PLATFORM_CPUS
+        # Refer to: https://github.com/rabbitmq/rabbitmq-common/commit/4f9ef33cf9ba52197ff210ffcdf6629c1b7a6e9e
+        RABBITMQ_IO_THREAD_POOL_SIZE=$((${PLATFORM_CPUS} * 16))
+        if [ ${RABBITMQ_IO_THREAD_POOL_SIZE} -lt 64 ]; then
+            RABBITMQ_IO_THREAD_POOL_SIZE=64
+        elif [ ${RABBITMQ_IO_THREAD_POOL_SIZE} -gt 1024 ]; then
+            RABBITMQ_IO_THREAD_POOL_SIZE=1024
+        fi
+        export RABBITMQ_IO_THREAD_POOL_SIZE
         setsid sh -c "exec taskset -c ${PLATFORM_CPULIST} $RABBITMQ_SERVER >> ${RABBITMQ_LOG_BASE}/startup_log 2>> ${RABBITMQ_LOG_BASE}/startup_err" &
     else
         setsid sh -c "$RABBITMQ_SERVER >> ${RABBITMQ_LOG_BASE}/startup_log 2>> ${RABBITMQ_LOG_BASE}/startup_err" &
