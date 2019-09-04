@@ -28,4 +28,3 @@ openstack/distributedcloud-client
 openstack/stx-ocf-scripts
 openstack/openstack-helm
 openstack/openstack-helm-infra
-monitor/monitor-helm
