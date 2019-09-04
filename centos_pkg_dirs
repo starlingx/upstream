@@ -25,4 +25,3 @@ openstack/python-openstacksdk
 openstack/python-wsme
 openstack/distributedcloud
 openstack/distributedcloud-client
-openstack/stx-ocf-scripts

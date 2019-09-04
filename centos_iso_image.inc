@@ -58,8 +58,6 @@ rabbitmq-server-config
 # python-wsme
 python2-wsme
 
-# stx-ocf-scripts
-stx-ocf-scripts
 
 # openstack-barbican
 openstack-barbican
