@@ -53,7 +53,6 @@ distributedcloud-client-dcmanagerclient
 
 # rabbitmq-server
 rabbitmq-server
-rabbitmq-server-config
 
 # python-wsme
 python2-wsme

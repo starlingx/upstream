@@ -19,7 +19,6 @@ openstack/python-openstackdocstheme
 openstack/python-oslo-messaging
 openstack/python-pankoclient
 openstack/rabbitmq-server
-openstack/rabbitmq-server-config
 openstack/python-openstackclient
 openstack/python-openstacksdk
 openstack/python-wsme
