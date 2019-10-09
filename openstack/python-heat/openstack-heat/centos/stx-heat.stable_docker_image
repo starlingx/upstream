@@ -2,7 +2,7 @@ BUILDER=loci
 LABEL=stx-heat
 PROJECT=heat
 PROJECT_REPO=https://opendev.org/openstack/heat.git
-PROJECT_REF=stable/stein
+PROJECT_REF=stable/train
 PIP_PACKAGES="pycrypto pylint"
 PROFILES="fluent heat apache"
 

@@ -2,7 +2,7 @@ BUILDER=loci
 LABEL=stx-horizon
 PROJECT=horizon
 PROJECT_REPO=https://opendev.org/openstack/horizon.git
-PROJECT_REF=stable/stein
+PROJECT_REF=stable/train
 PIP_PACKAGES="pycrypto python-ceilometerclient \
               coverage pyudev \
               ldap starlingx-dashboard pylint"
