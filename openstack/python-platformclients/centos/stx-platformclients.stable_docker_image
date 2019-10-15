@@ -5,4 +5,5 @@ PROJECT_REPO=nil
 DIST_PACKAGES="python-devel libffi-devel openssl-devel which bash-completion helm kubernetes-client"
 PIP_PACKAGES="pycrypto httplib2 pylint pyopenssl ndg-httpsclient pyasn1 \
     six prettytable PyYAML python-keystoneclient  python-barbicanclient \
-    python-openstackclient cgtsclient fmclient distributedcloud_client"
+    python-openstackclient cgtsclient fmclient distributedcloud_client \
+    osprofiler beautifulsoup4"
