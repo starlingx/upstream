@@ -22,4 +22,3 @@ openstack/rabbitmq-server
 openstack/python-openstackclient
 openstack/python-openstacksdk
 openstack/python-wsme
-openstack/distributedcloud-client

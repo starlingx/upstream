@@ -43,9 +43,6 @@ starlingx-dashboard
 # openstack-keystone
 openstack-keystone
 
-# distributedcloud-client
-distributedcloud-client-dcmanagerclient
-
 # rabbitmq-server
 rabbitmq-server
 
