@@ -11,7 +11,6 @@ openstack/python-horizon
 openstack/python-keystone
 openstack/python-neutron
 openstack/python-nova
-openstack/distributedcloud
 openstack/python-openstackclient
 openstack/python-placement
 openstack/python-platformclients
