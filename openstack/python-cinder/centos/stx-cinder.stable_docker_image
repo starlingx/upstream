@@ -2,7 +2,7 @@ BUILDER=loci
 LABEL=stx-cinder
 PROJECT=cinder
 PROJECT_REPO=https://opendev.org/openstack/cinder.git
-PROJECT_REF=stable/stein
+PROJECT_REF=stable/train
 PIP_PACKAGES="pycrypto python-swiftclient pylint"
 PROFILES="fluent cinder lvm ceph qemu"
 

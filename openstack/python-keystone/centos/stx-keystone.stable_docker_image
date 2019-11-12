@@ -2,7 +2,7 @@ BUILDER=loci
 LABEL=stx-keystone
 PROJECT=keystone
 PROJECT_REPO=https://opendev.org/openstack/keystone.git
-PROJECT_REF=stable/stein
+PROJECT_REF=stable/train
 PIP_PACKAGES="python-openstackclient ldap ldappool python-ldap pylint"
 PROFILES="fluent apache"
 

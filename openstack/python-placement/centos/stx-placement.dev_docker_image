@@ -1,6 +1,7 @@
 BUILDER=loci
 LABEL=stx-placement
 PROJECT=placement
-PROJECT_REPO=https://github.com/openstack/placement.git
+PROJECT_REPO=https://opendev.org/openstack/placement.git
 PIP_PACKAGES="pycrypto httplib2 pylint"
 PROFILES="apache"
+
