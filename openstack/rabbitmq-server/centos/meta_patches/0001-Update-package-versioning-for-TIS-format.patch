@@ -1,7 +1,7 @@
 From 9eb2a001b8f80d1a66d4ec78d882d7d6cb4dff51 Mon Sep 17 00:00:00 2001
 From: Scott Little <scott.little@windriver.com>
 Date: Tue, 24 Jan 2017 12:16:38 -0500
-Subject: [PATCH 1/2] WRS: 0001-Update-package-versioning-for-TIS-format.patch
+Subject: [PATCH 1/2]: 0001-Update-package-versioning-for-TIS-format.patch
 
 Signed-off-by: zhipengl <zhipengs.liu@intel.com>
 ---
