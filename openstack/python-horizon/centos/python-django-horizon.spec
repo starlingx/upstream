@@ -39,7 +39,6 @@ BuildRequires:   python-django
 Requires:   python-django
 
 # STX 
-BuildRequires: cgts-client
 Requires: cgts-client
 
 Requires:   pytz
