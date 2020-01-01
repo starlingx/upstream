@@ -213,11 +213,11 @@ rm -fr doc/build/html/.{doctrees,buildinfo}
 mkdir -p $RPM_BUILD_ROOT/wheels
 install -m 644 dist/*.whl $RPM_BUILD_ROOT/wheels/
 
-%check
-stestr --test-path=./keystoneclient/tests/unit run
-%if 0%{?with_python3}
-stestr-3 --test-path=./keystoneclient/tests/unit run
-%endif
+#%check
+#stestr --test-path=./keystoneclient/tests/unit run
+#%if 0%{?with_python3}
+#stestr-3 --test-path=./keystoneclient/tests/unit run
+#%endif
 
 %files -n python2-keystoneclient
 %license LICENSE
