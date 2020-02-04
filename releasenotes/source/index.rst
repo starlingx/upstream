@@ -1,6 +1,6 @@
-==========================
-stx-upstream Release Notes
-==========================
+================================
+StarlingX Upstream Release Notes
+================================
 
 .. toctree::
    :maxdepth: 2
