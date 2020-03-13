@@ -5,4 +5,5 @@ PROJECT_REPO=https://github.com/gnocchixyz/gnocchi.git
 PIP_PACKAGES="pylint SQLAlchemy SQLAlchemy-Utils oslo.db keystonemiddleware gnocchiclient pymemcache psycopg2"
 DIST_PACKAGES="python-rados"
 PROFILES="gnocchi apache"
+PYTHON3=yes
 

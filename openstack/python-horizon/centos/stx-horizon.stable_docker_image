@@ -2,14 +2,15 @@ BUILDER=loci
 LABEL=stx-horizon
 PROJECT=horizon
 PROJECT_REPO=https://opendev.org/openstack/horizon.git
-PROJECT_REF=stable/train
+PROJECT_REF=stable/ussuri
 PIP_PACKAGES="pycrypto python-ceilometerclient \
               coverage pyudev \
-              ldap starlingx-dashboard pylint"
+              ldap pylint"
 PROFILES="fluent horizon apache"
 CUSTOMIZATION="\
+    sudo cp /opt/rh/httpd24/root/etc/httpd/conf.modules.d/10-rh-python36-wsgi.conf /etc/httpd/conf.modules.d/10-wsgi.conf && \
+    sudo cp /opt/rh/httpd24/root/usr/lib64/httpd/modules/mod_rh-python36-wsgi.so /etc/httpd/modules/ && \
     ln -s /bin/true /usr/bin/a2enmod && \
-    sed -i 's/Listen 80/#Listen 80/' /etc/httpd/conf/httpd.conf && \
-    ln -s /var/lib/openstack/lib/python2.7/site-packages/starlingx_dashboard/themes/starlingx /var/lib/openstack/lib/python2.7/site-packages/openstack_dashboard/themes/starlingx \
+    sed -i 's/Listen 80/#Listen 80/' /etc/httpd/conf/httpd.conf \
 "
-
+PYTHON3=yes
