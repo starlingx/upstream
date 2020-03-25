@@ -9,7 +9,7 @@
 %global common_desc A python and command line client library for Ironic
 
 Name:           python-ironicclient
-Version:        2.7.0
+Version:        3.1.0
 Release:        1%{?_tis_dist}.%{tis_patch_ver}
 Summary:        Python client for Ironic
 
@@ -35,12 +35,12 @@ BuildRequires:  python2-wheel
 Requires:       python2-appdirs >= 1.3.0
 Requires:       python2-keystoneauth1 >= 3.4.0
 Requires:       python2-pbr >= 2.0.0
-Requires:       python2-prettytable
 Requires:       python2-six >= 1.10.0
 Requires:       python2-osc-lib >= 1.10.0
 Requires:       python2-oslo-i18n >= 3.15.3
 Requires:       python2-oslo-serialization >= 2.18.0
 Requires:       python2-oslo-utils >= 3.33.0
+Requires:       python2-oslo-config >= 5.2.0
 Requires:       python2-requests
 %if 0%{?fedora} > 0
 Requires:       python2-dogpile-cache >= 0.6.2
@@ -71,12 +71,12 @@ Requires:       python3-dogpile-cache >= 0.6.2
 Requires:       python3-jsonschema
 Requires:       python3-keystoneauth1 >= 3.4.0
 Requires:       python3-pbr >= 2.0.0
-Requires:       python3-prettytable
 Requires:       python3-six >= 1.10.0
 Requires:       python3-osc-lib >= 1.10.0
 Requires:       python3-oslo-i18n >= 3.15.3
 Requires:       python3-oslo-serialization >= 2.18.0
 Requires:       python3-oslo-utils >= 3.33.0
+Requires:       python3-oslo-config >= 5.2.0
 Requires:       python3-requests
 Requires:       python3-PyYAML
 
@@ -106,26 +106,16 @@ export PBR_VERSION=%{version}
 export PBR_VERSION=%{version}
 %if 0%{?with_python3}
 %py3_install
-mv %{buildroot}%{_bindir}/ironic %{buildroot}%{_bindir}/ironic-%{python3_version}
-ln -s ./ironic-%{python3_version} %{buildroot}%{_bindir}/ironic-3
 %endif
 
 %py2_install
-mv %{buildroot}%{_bindir}/ironic %{buildroot}%{_bindir}/ironic-%{python2_version}
-ln -s ./ironic-%{python2_version} %{buildroot}%{_bindir}/ironic-2
-
-ln -s ./ironic-2 %{buildroot}%{_bindir}/ironic
 
 mkdir -p $RPM_BUILD_ROOT/wheels
 install -m 644 dist/*.whl $RPM_BUILD_ROOT/wheels/
 
-
 %files -n python2-%{sname}
 %doc README.rst
 %license LICENSE
-%{_bindir}/ironic
-%{_bindir}/ironic-2
-%{_bindir}/ironic-%{python2_version}
 %{python2_sitelib}/ironicclient*
 %{python2_sitelib}/python_ironicclient*
 
@@ -133,8 +123,6 @@ install -m 644 dist/*.whl $RPM_BUILD_ROOT/wheels/
 %files -n python3-%{sname}
 %doc README.rst
 %license LICENSE
-%{_bindir}/ironic-3
-%{_bindir}/ironic-%{python3_version}
 %{python3_sitelib}/ironicclient*
 %{python3_sitelib}/python_ironicclient*
 %endif
