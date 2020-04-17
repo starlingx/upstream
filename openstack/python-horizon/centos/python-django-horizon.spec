@@ -29,6 +29,9 @@ Source11:   horizon-patching-restart
 Source13:   guni_config.py
 Source14:   horizon-assets-compress
 
+# Patches
+Patch1:   0001-Remove-the-hard-coded-internal-URL-for-keystone.patch
+
 #
 # BuildArch needs to be located below patches in the spec file. Don't ask!
 #

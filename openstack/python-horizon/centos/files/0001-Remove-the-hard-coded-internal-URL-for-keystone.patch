@@ -1,0 +1,15 @@
+index 65706bf..4ddc256 100644
+--- a/openstack_dashboard/api/keystone.py
++++ b/openstack_dashboard/api/keystone.py
+@@ -93,7 +93,7 @@ class Service(base.APIDictWrapper):
+         super(Service, self).__init__(service, *args, **kwargs)
+         self.public_url = base.get_url_for_service(service, region,
+                                                    'publicURL')
+-        self.url = base.get_url_for_service(service, region, 'internalURL')
++        self.url = base.get_url_for_service(service, region)
+         if self.url:
+             self.host = urlparse.urlparse(self.url).hostname
+         else:
+-- 
+1.8.3.1
+
