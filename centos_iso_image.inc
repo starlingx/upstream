@@ -47,7 +47,7 @@
 #rabbitmq-server
 
 # python-wsme
-#python2-wsme
+python3-wsme
 
 
 # openstack-barbican
