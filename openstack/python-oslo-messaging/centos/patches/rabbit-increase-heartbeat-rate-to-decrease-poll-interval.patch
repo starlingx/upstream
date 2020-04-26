@@ -15,6 +15,7 @@ is blocked.  To ensure that the recv() does not block for a long time we are
 reducing the interval by controlling the rate.
 
 Signed-off-by: rpm-build <rpm-build>
+Signed-off-by: Yong Fu <fuyong@neusoft.com>
 ---
  oslo_messaging/_drivers/impl_rabbit.py | 2 +-
  1 file changed, 1 insertion(+), 1 deletion(-)
@@ -23,15 +24,15 @@ diff --git a/oslo_messaging/_drivers/impl_rabbit.py b/oslo_messaging/_drivers/im
 index da1acee..eeb9257 100644
 --- a/oslo_messaging/_drivers/impl_rabbit.py
 +++ b/oslo_messaging/_drivers/impl_rabbit.py
-@@ -191,7 +191,7 @@ rabbit_opts = [
+@@ -165,7 +165,7 @@ rabbit_opts = [
                 "considered down if heartbeat's keep-alive fails "
-                "(0 disable the heartbeat). EXPERIMENTAL"),
+                "(0 disables heartbeat)."),
      cfg.IntOpt('heartbeat_rate',
 -               default=2,
 +               default=10,
                 help='How often times during the heartbeat_timeout_threshold '
                 'we check the heartbeat.'),
- 
+     cfg.IntOpt('direct_mandatory_flag',
 -- 
-2.12.1
+2.17.1
 

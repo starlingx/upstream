@@ -1,9 +1,10 @@
 From ed0e39e1f647b44b19cfe444009ab9e64c47f070 Mon Sep 17 00:00:00 2001
 From: Scott Little <scott.little@windriver.com>
 Date: Mon, 2 Oct 2017 14:45:55 -0400
-Subject: [PATCH 2/2] WRS:
+Subject: [PATCH 2/2]
  spec-rabbit-increase-heartbeat-rate-to-decrease-polling-interval.patch
 
+Signed-off-by: Yong Fu <fuyong@neusoft.com>
 ---
  SPECS/python-oslo-messaging.spec | 4 ++++
  1 file changed, 4 insertions(+)
@@ -12,17 +13,17 @@ diff --git a/SPECS/python-oslo-messaging.spec b/SPECS/python-oslo-messaging.spec
 index 361f93e..55e8567 100644
 --- a/SPECS/python-oslo-messaging.spec
 +++ b/SPECS/python-oslo-messaging.spec
-@@ -17,6 +17,10 @@ Summary:    OpenStack common messaging library
+@@ -35,6 +35,10 @@ Summary:    OpenStack common messaging library
  License:    ASL 2.0
  URL:        https://launchpad.net/oslo
  Source0:    https://tarballs.openstack.org/%{pypi_name}/%{pypi_name}-%{upstream_version}.tar.gz
 +
-+# WRS
++# STX
 +Patch0001:  rabbit-increase-heartbeat-rate-to-decrease-poll-interval.patch
 +
  BuildArch:  noarch
  
  BuildRequires: git
 -- 
-1.9.1
+2.17.1
 
