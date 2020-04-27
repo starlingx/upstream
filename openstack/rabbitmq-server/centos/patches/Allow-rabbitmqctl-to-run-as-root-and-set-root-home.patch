@@ -1,0 +1,26 @@
+From cc25d3100a677e0c69a11975fd30ce72937ad575 Mon Sep 17 00:00:00 2001
+From: Scott Little <scott.little@windriver.com>
+Date: Tue, 24 Jan 2017 12:16:38 -0500
+Subject: [PATCH 2/2]: Allow rabbitmqctl to run as root and set root home
+
+---
+ scripts/rabbitmq-script-wrapper | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
+
+diff --git a/scripts/rabbitmq-script-wrapper b/scripts/rabbitmq-script-wrapper
+index 4acba9d..fe082e4 100644
+--- a/scripts/rabbitmq-script-wrapper
++++ b/scripts/rabbitmq-script-wrapper
+@@ -107,7 +107,8 @@ exec_script_as_root() {
+     fi
+   elif [ -x /bin/su ]
+   then
+-    exec /bin/su -s /bin/sh rabbitmq -- "/usr/lib/rabbitmq/bin/$SCRIPT" "$@"
++    export HOME=${HOME:-/root}
++    exec /bin/sh -- "/usr/lib/rabbitmq/bin/$SCRIPT" "$@"
+   else
+     echo "Please ensure /bin/su or /sbin/runuser exists and can be executed by $USER." 1>&2
+     exit 1
+-- 
+2.7.4
+

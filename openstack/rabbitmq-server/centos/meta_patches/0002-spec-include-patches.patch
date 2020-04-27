@@ -1,0 +1,34 @@
+From cc25d3100a677e0c69a11975fd30ce72937ad575 Mon Sep 17 00:00:00 2001
+From: Scott Little <scott.little@windriver.com>
+Date: Tue, 24 Jan 2017 12:16:38 -0500
+Subject: [PATCH 2/2]: Allow-rabbitmqctl-to-run-as-root-and-set-root-home.patch
+
+---
+ SPECS/rabbitmq-server.spec | 4 ++++
+ 1 file changed, 4 insertions(+)
+
+diff --git a/SPECS/rabbitmq-server.spec b/SPECS/rabbitmq-server.spec
+index 7b879ed..9b7148c 100644
+--- a/SPECS/rabbitmq-server.spec
++++ b/SPECS/rabbitmq-server.spec
+@@ -25,6 +25,8 @@ Patch201: rabbitmq-server-release-0001-Don-t-use-templates.patch
+ Patch202: rabbitmq-server-release-0002-Revert-Use-template-in-rabbitmq-script-wrapper-for-R.patch
+ Patch301: rabbitmq-amqp1.0-common-0001-force-python3.patch
+ 
++Patch1001: Allow-rabbitmqctl-to-run-as-root-and-set-root-home.patch
++
+ URL: https://www.rabbitmq.com/
+ BuildRequires: elixir
+ BuildRequires: erlang >= %{erlang_minver}
+@@ -83,6 +85,8 @@ cd deps/amqp10_common
+ %patch301 -p1
+ cd ../..
+ 
++%patch1001 -p1
++
+ # We have to remove it until common_test subpackage lands RHOS
+ rm -f \
+ 	deps/amqp_client/src/rabbit_ct_client_helpers.erl \
+-- 
+2.7.4
+
