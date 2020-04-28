@@ -11,7 +11,7 @@ This is a client library for Aodh built on the Aodh API. It \
 provides a Python API (the aodhclient module) and a command-line tool.
 
 Name:             python-aodhclient
-Version:          1.2.0
+Version:          1.3.0
 Release:          1%{?_tis_dist}.%{tis_patch_ver}
 Summary:          Python API and CLI for OpenStack Aodh
 
@@ -43,6 +43,7 @@ Requires:         python-oslo-utils >= 2.0.0
 Requires:         python-keystoneauth1 >= 1.0.0
 Requires:         python-six >= 1.9.0
 Requires:         python-osc-lib >= 1.0.1
+Requires:         python-osprofiler >= 1.4.0
 Requires:         pyparsing
 
 %description -n python2-%{pypi_name}
@@ -94,6 +95,7 @@ Requires:         python3-oslo-utils >= 2.0.0
 Requires:         python3-keystoneauth1 >= 1.0.0
 Requires:         python3-six >= 1.9.0
 Requires:         python3-osc-lib >= 1.0.1
+Requires:         python3-osprofiler >= 1.4.0
 Requires:         python3-pyparsing
 
 %description -n python3-%{pypi_name}
