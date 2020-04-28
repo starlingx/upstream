@@ -8,27 +8,28 @@ Subject: [PATCH 1/1] Add keyring patch
  1 file changed, 4 insertions(+), 1 deletion(-)
 
 diff --git a/SPECS/openstack-keystone.spec b/SPECS/openstack-keystone.spec
-index a20bda1..945de6d 100644
+index d3ec1d7..3d5fcee 100644
 --- a/SPECS/openstack-keystone.spec
 +++ b/SPECS/openstack-keystone.spec
-@@ -28,7 +28,7 @@ Name:           openstack-keystone
+@@ -27,7 +27,7 @@ Name:           openstack-keystone
  # https://review.openstack.org/#/q/I6a35fa0dda798fad93b804d00a46af80f08d475c,n,z
  Epoch:          1
- Version:        15.0.0
--Release:        0.2%{?milestone}%{?dist}
-+Release:        0.2.el7%{?_tis_dist}.%{tis_patch_ver}
+ Version:        16.0.0
+-Release:        1%{?dist}
++Release:        1.el7%{?_tis_dist}.%{tis_patch_ver}
  Summary:        OpenStack Identity Service
  License:        ASL 2.0
  URL:            http://keystone.openstack.org/
-@@ -42,6 +42,9 @@ Source3:        openstack-keystone.sysctl
+@@ -39,6 +39,9 @@ Source3:        openstack-keystone.sysctl
  Source5:        openstack-keystone-sample-data
  Source20:       keystone-dist.conf
-
+ 
 +# STX: Include patches here
 +Patch1:         0001-Rebasing-Keyring-integration.patch
 +
  BuildArch:      noarch
  BuildRequires:  openstack-macros
  BuildRequires:  python%{pyver}-devel
---
+-- 
 1.8.3.1
+
