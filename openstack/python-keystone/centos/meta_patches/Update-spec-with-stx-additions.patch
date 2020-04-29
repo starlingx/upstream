@@ -1,30 +1,31 @@
 From 7afb60e6591d9d1e6d6374a85cf516182b660815 Mon Sep 17 00:00:00 2001
 From: Tyler Smith <tyler.smith@windriver.com>
 Date: Mon, 8 Apr 2019 15:40:07 -0400
-Subject: [PATCH 1/1] Update-spec-with-tis-additions
+Subject: [PATCH 1/1] Update-spec-with-stx-additions
 
+Signed-off-by: Yong Fu <fuyong@neusoft.com>
 ---
- SPECS/openstack-keystone.spec | 44 +++++++++++++++++++++++++++++++++++++++----
- 1 file changed, 40 insertions(+), 4 deletions(-)
+ SPECS/openstack-keystone.spec | 49 ++++++++++++++++++++++++++++++-----
+ 1 file changed, 43 insertions(+), 6 deletions(-)
 
 diff --git a/SPECS/openstack-keystone.spec b/SPECS/openstack-keystone.spec
 index 945de6d..74b6ba2 100644
 --- a/SPECS/openstack-keystone.spec
 +++ b/SPECS/openstack-keystone.spec
-@@ -12,7 +12,8 @@
- %global pyver_build %py%{pyver}_build
+@@ -11,7 +11,8 @@
+ %global pyver_build %{expand:%{py%{pyver}_build}}
  # End of macros for py2/py3 compatibility
-
+ 
 -%global with_doc 1
 +#STX: Turn off doc building
 +%global with_doc 0
  %global service keystone
  # guard for package OSP does not support
  %global rhosp 0
-@@ -42,6 +43,13 @@ Source3:        openstack-keystone.sysctl
+@@ -39,6 +40,13 @@ Source3:        openstack-keystone.sysctl
  Source5:        openstack-keystone-sample-data
  Source20:       keystone-dist.conf
-
+ 
 +#STX
 +Source99:       openstack-keystone.service
 +Source100:      keystone-all
@@ -34,10 +35,10 @@ index 945de6d..74b6ba2 100644
 +
  # STX: Include patches here
  Patch1:         0001-Rebasing-Keyring-integration.patch
-
-@@ -234,9 +242,9 @@ sed -i 's#/local/bin#/bin#' httpd/wsgi-keystone.conf
+ 
+@@ -231,9 +239,9 @@ sed -i 's#/local/bin#/bin#' httpd/wsgi-keystone.conf
  sed -i 's#apache2#httpd#' httpd/wsgi-keystone.conf
-
+ 
  %build
 -PYTHONPATH=. oslo-config-generator-%{pyver} --config-file=config-generator/keystone.conf
 -PYTHONPATH=. oslo-config-generator-%{pyver} --config-file=config-generator/keystone.conf --format yaml --output-file=%{service}-schema.yaml
@@ -46,18 +47,18 @@ index 945de6d..74b6ba2 100644
 +PYTHONPATH=. oslo-config-generator --config-file=config-generator/keystone.conf --format yaml --output-file=%{service}-schema.yaml
 +PYTHONPATH=. oslo-config-generator --config-file=config-generator/keystone.conf --format json --output-file=%{service}-schema.json
  # distribution defaults are located in keystone-dist.conf
-
+ 
  %{pyver_build}
-@@ -251,6 +259,8 @@ PYTHONPATH=. oslo-config-generator-%{pyver} --config-file=config-generator/keyst
+@@ -248,6 +256,8 @@ PYTHONPATH=. oslo-config-generator-%{pyver} --config-file=config-generator/keyst
  # Instead, ship an empty file that operators can override.
  echo "{}" > policy.json
-
+ 
 +# STX: default dir for fernet tokens
 +install -d -m 750 %{buildroot}%{_sysconfdir}/keystone/credential-keys/
  install -d -m 755 %{buildroot}%{_sysconfdir}/keystone
  install -p -D -m 640 etc/keystone.conf.sample %{buildroot}%{_sysconfdir}/keystone/keystone.conf
  install -p -D -m 640 policy.json %{buildroot}%{_sysconfdir}/keystone/policy.json
-@@ -261,7 +271,8 @@ install -p -D -m 644 etc/policy.v3cloudsample.json %{buildroot}%{_datadir}/keyst
+@@ -257,7 +267,8 @@ install -p -D -m 644 %{SOURCE20} %{buildroot}%{_datadir}/keystone/keystone-dist.
  install -p -D -m 640 etc/logging.conf.sample %{buildroot}%{_sysconfdir}/keystone/logging.conf
  install -p -D -m 640 etc/default_catalog.templates %{buildroot}%{_sysconfdir}/keystone/default_catalog.templates
  install -p -D -m 640 etc/sso_callback_template.html %{buildroot}%{_sysconfdir}/keystone/sso_callback_template.html
@@ -67,10 +68,10 @@ index 945de6d..74b6ba2 100644
  install -d -m 755 %{buildroot}%{_prefix}/lib/sysctl.d
  install -p -D -m 644 %{SOURCE3} %{buildroot}%{_prefix}/lib/sysctl.d/openstack-keystone.conf
  # Install sample data script.
-@@ -270,6 +281,21 @@ install -p -D -m 755 %{SOURCE5} %{buildroot}%{_bindir}/openstack-keystone-sample
+@@ -266,6 +277,21 @@ install -p -D -m 755 %{SOURCE5} %{buildroot}%{_bindir}/openstack-keystone-sample
  # Install sample HTTPD integration files
  install -p -D -m 644 httpd/wsgi-keystone.conf  %{buildroot}%{_datadir}/keystone/
-
+ 
 +# STX install keystone cron script
 +install -p -D -m 755 %{SOURCE101} %{buildroot}%{_bindir}/keystone-fernet-keys-rotate-active
 +
@@ -88,8 +89,8 @@ index 945de6d..74b6ba2 100644
 +
  install -d -m 755 %{buildroot}%{_sharedstatedir}/keystone
  install -d -m 755 %{buildroot}%{_localstatedir}/log/keystone
-
-@@ -325,6 +351,10 @@ chmod 660 %{_localstatedir}/log/keystone/keystone.log
+ 
+@@ -323,26 +349,37 @@ chmod 660 %{_localstatedir}/log/keystone/keystone.log
  %{_bindir}/keystone-manage
  %{_bindir}/keystone-status
  %{_bindir}/openstack-keystone-sample-data
@@ -99,8 +100,7 @@ index 945de6d..74b6ba2 100644
 +%{_bindir}/keystone-fernet-keys-rotate-active
  %dir %{_datadir}/keystone
  %attr(0644, root, keystone) %{_datadir}/keystone/keystone-dist.conf
- %attr(0644, root, keystone) %{_datadir}/keystone/policy.v3cloudsample.json
-@@ -332,20 +362,26 @@ chmod 660 %{_localstatedir}/log/keystone/keystone.log
+ %attr(0644, root, keystone) %{_datadir}/keystone/%{service}-schema.yaml
  %attr(0644, root, keystone) %{_datadir}/keystone/%{service}-schema.json
  %attr(0755, root, root) %{_datadir}/keystone/sample_data.sh
  %attr(0644, root, keystone) %{_datadir}/keystone/wsgi-keystone.conf
@@ -119,16 +119,16 @@ index 945de6d..74b6ba2 100644
  %dir %attr(0750, keystone, keystone) %{_localstatedir}/log/keystone
  %ghost %attr(0660, root, keystone) %{_localstatedir}/log/keystone/keystone.log
  %{_prefix}/lib/sysctl.d/openstack-keystone.conf
--
+ 
 +# STX: add password rules configuration
 +%attr(0440, root, keystone) %{_sysconfdir}/keystone/password-rules.conf
-
+ 
  %files -n python%{pyver}-keystone -f %{service}.lang
 +# STX: public.py addition
 +%{_datarootdir}/keystone/public*.py*
  %defattr(-,root,root,-)
  %license LICENSE
  %{pyver_sitelib}/keystone
---
-1.8.3.1
+-- 
+2.17.1
 
