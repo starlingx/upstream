@@ -43,6 +43,7 @@ BuildRequires: python2-oslotest
 BuildRequires: python2-testtools
 BuildRequires: python2-testrepository
 BuildRequires: python2-testscenarios
+BuildRequires: python2-oslo-log >= 3.36.0
 
 Requires: python2-babel >= 2.3.4
 Requires: python2-iso8601 >= 0.1.11
