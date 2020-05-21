@@ -1,6 +1,4 @@
-#openstack/python-muranoclient
 #openstack/python-ironicclient
-#openstack/python-magnumclient
 #openstack/openstack-ras
 #openstack/openstack-os-vif
 #openstack/python-aodhclient

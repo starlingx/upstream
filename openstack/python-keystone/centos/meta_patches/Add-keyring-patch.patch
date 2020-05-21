@@ -9,7 +9,7 @@ Signed-off-by: Yong Fu <fuyong@neusoft.com>
  1 file changed, 4 insertions(+), 1 deletion(-)
 
 diff --git a/SPECS/openstack-keystone.spec b/SPECS/openstack-keystone.spec
-index a20bda1..945de6d 100644
+index d3ec1d7..3d5fcee 100644
 --- a/SPECS/openstack-keystone.spec
 +++ b/SPECS/openstack-keystone.spec
 @@ -27,7 +27,7 @@ Name:           openstack-keystone

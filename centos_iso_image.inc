@@ -22,8 +22,6 @@
 #python2-heatclient
 #python2-ironicclient
 #python2-keystoneclient
-#python2-magnumclient
-#python2-muranoclient
 #python2-neutronclient
 #python2-novaclient
 #python2-openstackclient

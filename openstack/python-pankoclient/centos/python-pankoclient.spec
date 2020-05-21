@@ -10,7 +10,7 @@
 %endif
 
 Name:             python-pankoclient
-Version:          0.5.0
+Version:          0.7.0
 Release:          1%{?_tis_dist}.%{tis_patch_ver}
 Summary:          Python API and CLI for OpenStack Panko
 
@@ -39,6 +39,7 @@ Requires:         python-osc-lib >= 1.2.0
 Requires:         python-oslo-i18n >= 2.1.0
 Requires:         python-oslo-serialization >= 1.10.0
 Requires:         python-oslo-utils >= 3.18.0
+Requires:         python-osprofiler >= 1.4.0
 Requires:         python-pbr
 Requires:         python-requests
 Requires:         python-six >= 1.9.0
@@ -93,6 +94,7 @@ Requires:         python3-osc-lib >= 1.2.0
 Requires:         python3-oslo-i18n >= 2.1.0
 Requires:         python3-oslo-serialization >= 1.10.0
 Requires:         python3-oslo-utils >= 3.18.0
+Requires:         python3-osprofiler >= 1.4.0
 Requires:         python3-pbr
 Requires:         python3-requests
 Requires:         python3-six >= 1.9.0

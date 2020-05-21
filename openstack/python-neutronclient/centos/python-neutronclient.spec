@@ -11,7 +11,7 @@ Client library and command line utility for interacting with OpenStack \
 Neutron's API.
 
 Name:       python-neutronclient
-Version:    6.12.0
+Version:    6.14.0
 Release:    1%{?_tis_dist}.%{tis_patch_ver}
 Summary:    Python API and CLI for OpenStack Neutron
 
@@ -43,6 +43,7 @@ BuildRequires: python2-oslotest
 BuildRequires: python2-testtools
 BuildRequires: python2-testrepository
 BuildRequires: python2-testscenarios
+BuildRequires: python2-oslo-log >= 3.36.0
 
 Requires: python2-babel >= 2.3.4
 Requires: python2-iso8601 >= 0.1.11
