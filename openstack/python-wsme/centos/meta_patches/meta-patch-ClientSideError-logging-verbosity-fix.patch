@@ -3,6 +3,7 @@ From: Kam Nasim <kam.nasim@windriver.com>
 Date: Tue, 3 Jan 2017 13:36:15 -0500
 Subject: [PATCH] meta patch for ClientSideError logging verbosity fix.
 
+Signed-off-by: Yong Fu <fuyong@neusoft.com>
 ---
  SPECS/python-wsme.spec | 7 +++++++
  1 file changed, 7 insertions(+)
@@ -11,27 +12,27 @@ diff --git a/SPECS/python-wsme.spec b/SPECS/python-wsme.spec
 index 2f84ba5..2d03df4 100644
 --- a/SPECS/python-wsme.spec
 +++ b/SPECS/python-wsme.spec
-@@ -20,6 +20,10 @@ Summary:        Web Services Made Easy
+@@ -29,6 +29,10 @@ Summary:        Web Services Made Easy
  License:        MIT
  URL:            https://pypi.python.org/pypi/WSME
- Source0:        http://tarballs.openstack.org/wsme/%{pypi_name}-%{version}.tar.gz
+ Source0:        https://pypi.python.org/packages/source/W/%{pypi_name}/%{pypi_name}-%{version}.tar.gz
 +
-+# WRS
++# STX
 +Patch0001: 0001-log-client-side-errors.patch
 +
  BuildArch:      noarch
  
  %description
-@@ -83,6 +87,9 @@ manipulate the request and the response objects.
+@@ -78,6 +82,9 @@ manipulate the request and the response objects.
  %prep
  %setup -q -n %{pypi_name}-%{upstream_version}
  
-+# Apply WRS patches
++# Apply STX patches
 +%patch0001 -p1
 +
  %build
- %{__python2} setup.py build
- %if 0%{?with_python3}
+ %{pyver_build}
+ 
 -- 
-2.7.4
+2.17.1
 
