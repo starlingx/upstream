@@ -1,4 +1,27 @@
+# Macros for py2/py3 compatibility
+%if 0%{?fedora} || 0%{?rhel} > 7
+%global pyver %{python3_pkgversion}
+%else
+%global pyver 2
+%endif
+
+%global pyver_bin python%{pyver}
+%global pyver_sitelib %{expand:%{python%{pyver}_sitelib}}
+%global pyver_install %{expand:%{py%{pyver}_install}}
+%global pyver_build %{expand:%{py%{pyver}_build}}
+%global pyver_build_wheel %{expand:%{py%{pyver}_build_wheel}}
+# End of macros for py2/py3 compatibility
+
 %{!?upstream_version: %global upstream_version %{version}%{?milestone}}
+%global rhosp 0
+
+%if 0%{?rhosp} == 0
+%global with_translation_extraction_support 1
+%else
+%global with_translation_extraction_support 0
+%endif
+
+%global with_doc 1
 
 Name:       python-django-horizon
 # Liberty semver reset
@@ -38,38 +61,57 @@ Patch1:   0001-Remove-the-hard-coded-internal-URL-for-keystone.patch
 
 BuildArch:  noarch
 
-BuildRequires:   python-django
-Requires:   python-django
+%description
+Horizon is a Django application for providing Openstack UI components.
+It allows performing site administrator (viewing account resource usage,
+configuring users, accounts, quotas, flavors, etc.) and end user
+operations (start/stop/delete instances, create/restore snapshots, view
+instance VNC console, etc.)
+
+%package -n     python%{pyver}-django-horizon
+Summary:    Django application for talking to Openstack
+%{?python_provide:%python_provide python%{pyver}-django-horizon}
+
+BuildRequires:   python%{pyver}-django
+Requires:   python%{pyver}-django
 
 # STX 
 Requires: cgts-client
 
-Requires:   pytz
-Requires:   python-six >= 1.10.0
-Requires:   python-pbr
+Requires:   python%{pyver}-pytz
+Requires:   python%{pyver}-six >= 1.10.0
+Requires:   python%{pyver}-pbr
 
-BuildRequires: python2-devel
-BuildRequires: python-setuptools
-BuildRequires: python2-pip
-BuildRequires: python2-wheel
-BuildRequires: python-pbr >= 2.0.0
+BuildRequires: python%{pyver}-devel
+BuildRequires: python%{pyver}-setuptools
+BuildRequires: python%{pyver}-wheel
+BuildRequires: python%{pyver}-pbr >= 2.0.0
 BuildRequires: git
-BuildRequires: python-six >= 1.10.0
+BuildRequires: python%{pyver}-six >= 1.10.0
 BuildRequires: gettext
 
 # for checks:
-%if 0%{?rhel} == 0
-BuildRequires:   python-django-nose
-BuildRequires:   python-mox3
+BuildRequires:   python%{pyver}-django-nose
+BuildRequires:   python%{pyver}-mox3
+BuildRequires:   python%{pyver}-nose
+BuildRequires:   python%{pyver}-osprofiler
+BuildRequires:   python%{pyver}-iso8601
+BuildRequires:   python%{pyver}-pycodestyle
+BuildRequires:   python%{pyver}-mock
+
+# Handle python2 exception
+%if %{pyver} == 2
 BuildRequires:   python-nose-exclude
-BuildRequires:   python-nose
 BuildRequires:   python-selenium
-%endif
-BuildRequires:   python-osprofiler
 BuildRequires:   python-netaddr
 BuildRequires:   python-anyjson
-BuildRequires:   python-iso8601
-BuildRequires:   python-pep8
+%else
+BuildRequires:   python%{pyver}-nose-exclude
+BuildRequires:   python%{pyver}-selenium
+BuildRequires:   python%{pyver}-netaddr
+BuildRequires:   python%{pyver}-anyjson
+%endif
+
 
 # additional provides to be consistent with other django packages
 Provides: django-horizon = %{epoch}:%{version}-%{release}
@@ -80,7 +122,7 @@ Obsoletes: python2-django-openstack-auth < 4.0.0-1
 Provides: python-django-openstack-auth = %{epoch}:%{version}-%{release}
 Provides: python2-django-openstack-auth = %{epoch}:%{version}-%{release}
 
-%description
+%description -n python%{pyver}-django-horizon
 Horizon is a Django application for providing Openstack UI components.
 It allows performing site administrator (viewing account resource usage,
 configuring users, accounts, quotas, flavors, etc.) and end user
@@ -93,127 +135,191 @@ Summary:    Openstack web user interface reference implementation
 Group:      Applications/System
 
 Requires:   httpd
-Requires:   mod_wsgi
-Requires:   %{name} = %{epoch}:%{version}-%{release}
-Requires:   python2-django-compressor >= 2.0
-Requires:   python-django-appconf
-Requires:   python-django-babel
-Requires:   python-lesscpy
+Requires:   python%{pyver}-django-horizon = %{epoch}:%{version}-%{release}
+Requires:   python%{pyver}-django-compressor >= 2.0
 
+%if 0%{rhosp} == 0
 Requires:   openstack-dashboard-theme >= %{epoch}:%{version}-%{release}
+%else
+%{lua: ver = rpm.expand("%version"); x, y = string.find(ver, "%.");
+maj = string.sub(ver, 1, x-1); rpm.define("version_major " .. maj .. ".0.0");}
+Requires:   openstack-dashboard-theme >= %{epoch}:%{version_major}
+%endif
 
-Requires:   python2-iso8601
-Requires:   python2-glanceclient >= 1:2.8.0
-Requires:   python2-keystoneclient >= 1:3.15.0
-Requires:   python2-keystoneauth1 >= 3.4.0
-Requires:   python2-novaclient >= 1:9.1.0
-Requires:   python2-neutronclient >= 6.7.0
-Requires:   python2-cinderclient >= 3.3.0
-Requires:   python2-swiftclient >= 3.2.0
-Requires:   python2-netaddr
-Requires:   python2-osprofiler >= 2.3.0
-Requires:   python-pymongo >= 3.0.2
-Requires:   python2-django-pyscss >= 2.0.2
-Requires:   python-semantic_version
-Requires:   python2-XStatic
-Requires:   python-XStatic-jQuery
-Requires:   python2-XStatic-Angular >= 1:1.5.8.0
-Requires:   python2-XStatic-Angular-Bootstrap
-Requires:   python2-XStatic-Angular-Schema-Form
-Requires:   python2-XStatic-D3
-Requires:   python2-XStatic-Font-Awesome
-Requires:   python-XStatic-Hogan
-Requires:   python-XStatic-JQuery-Migrate
-Requires:   python-XStatic-JQuery-TableSorter
-Requires:   python-XStatic-JQuery-quicksearch
-Requires:   python2-XStatic-JSEncrypt
-Requires:   python2-XStatic-Jasmine
-Requires:   python-XStatic-Rickshaw
-Requires:   python-XStatic-Spin
-Requires:   python-XStatic-jquery-ui
-Requires:   python-XStatic-Bootstrap-Datepicker
-Requires:   python2-XStatic-Bootstrap-SCSS >= 3.3.7.1
-Requires:   python2-XStatic-termjs
-Requires:   python2-XStatic-smart-table
-Requires:   python-XStatic-Angular-lrdragndrop
-Requires:   python2-XStatic-Angular-Gettext
-Requires:   python2-XStatic-Angular-FileUpload
-Requires:   python-XStatic-Magic-Search
-Requires:   python2-XStatic-bootswatch
-Requires:   python2-XStatic-roboto-fontface >= 0.5.0.0
-Requires:   python2-XStatic-mdi
-Requires:   python2-XStatic-objectpath
-Requires:   python2-XStatic-tv4
-Requires:   python2-django-debreach
+Requires:   python%{pyver}-iso8601
+Requires:   python%{pyver}-glanceclient >= 1:2.8.0
+Requires:   python%{pyver}-keystoneclient >= 1:3.15.0
+Requires:   python%{pyver}-keystoneauth1 >= 3.4.0
+Requires:   python%{pyver}-novaclient >= 1:9.1.0
+Requires:   python%{pyver}-neutronclient >= 6.7.0
+Requires:   python%{pyver}-cinderclient >= 4.0.1
+Requires:   python%{pyver}-swiftclient >= 3.2.0
+Requires:   python%{pyver}-netaddr
+Requires:   python%{pyver}-osprofiler >= 2.3.0
+Requires:   python%{pyver}-django-pyscss >= 2.0.2
+Requires:   python%{pyver}-XStatic
+Requires:   python%{pyver}-XStatic-Angular >= 1:1.5.8.0
+Requires:   python%{pyver}-XStatic-Angular-Bootstrap
+Requires:   python%{pyver}-XStatic-Angular-Schema-Form
+Requires:   python%{pyver}-XStatic-D3
+Requires:   python%{pyver}-XStatic-Font-Awesome
+Requires:   python%{pyver}-XStatic-JSEncrypt
+Requires:   python%{pyver}-XStatic-Jasmine
+Requires:   python%{pyver}-XStatic-Bootstrap-SCSS >= 3.3.7.1
+Requires:   python%{pyver}-XStatic-termjs
+Requires:   python%{pyver}-XStatic-smart-table
+Requires:   python%{pyver}-XStatic-Angular-Gettext
+Requires:   python%{pyver}-XStatic-Angular-FileUpload
+Requires:   python%{pyver}-XStatic-bootswatch
+Requires:   python%{pyver}-XStatic-roboto-fontface >= 0.5.0.0
+Requires:   python%{pyver}-XStatic-mdi
+Requires:   python%{pyver}-XStatic-objectpath
+Requires:   python%{pyver}-XStatic-tv4
+Requires:   python%{pyver}-django-debreach
 
-Requires:   python2-scss >= 1.3.4
+Requires:   python%{pyver}-scss >= 1.3.4
 Requires:   fontawesome-fonts-web >= 4.1.0
 
-Requires:   python2-oslo-concurrency >= 3.26.0
-Requires:   python2-oslo-config >= 2:5.2.0
-Requires:   python2-oslo-i18n >= 3.15.3
-Requires:   python2-oslo-serialization >= 2.18.0
-Requires:   python2-oslo-utils >= 3.33.0
-Requires:   python2-oslo-policy >= 1.30.0
-Requires:   python2-babel
-Requires:   python2-futurist
-Requires:   python-pint
+Requires:   python%{pyver}-oslo-concurrency >= 3.26.0
+Requires:   python%{pyver}-oslo-config >= 2:5.2.0
+Requires:   python%{pyver}-oslo-i18n >= 3.15.3
+Requires:   python%{pyver}-oslo-serialization >= 2.18.0
+Requires:   python%{pyver}-oslo-utils >= 3.33.0
+Requires:   python%{pyver}-oslo-upgradecheck >= 0.1.1
+Requires:   python%{pyver}-requests >= 2.14.2
+Requires:   python%{pyver}-oslo-policy >= 1.30.0
+Requires:   python%{pyver}-babel
+Requires:   python%{pyver}-futurist
 
 Requires:   openssl
 Requires:   logrotate
 
+# Handle python2 exception
+%if %{pyver} == 2
+Requires:   mod_wsgi
+Requires:   python-django-appconf
+Requires:   python-lesscpy
+Requires:   python-pymongo >= 3.0.2
+Requires:   python-semantic_version
+Requires:   python-XStatic-jQuery
+Requires:   python-XStatic-Hogan
+Requires:   python-XStatic-JQuery-Migrate
+Requires:   python-XStatic-JQuery-TableSorter
+Requires:   python-XStatic-JQuery-quicksearch
+Requires:   python-XStatic-Rickshaw
+Requires:   python-XStatic-Spin
+Requires:   python-XStatic-jquery-ui
+Requires:   python-XStatic-Bootstrap-Datepicker
+Requires:   python-XStatic-Angular-lrdragndrop
+Requires:   python-XStatic-Magic-Search
+Requires:   python-pint
 Requires:   PyYAML >= 3.10
+Requires:   python-memcached
+%else
+Requires:   python%{pyver}-mod_wsgi
+Requires:   python%{pyver}-django-appconf
+Requires:   python%{pyver}-lesscpy
+Requires:   python%{pyver}-pymongo >= 3.0.2
+Requires:   python%{pyver}-semantic_version
+Requires:   python%{pyver}-XStatic-jQuery
+Requires:   python%{pyver}-XStatic-Hogan
+Requires:   python%{pyver}-XStatic-JQuery-Migrate
+Requires:   python%{pyver}-XStatic-JQuery-TableSorter
+Requires:   python%{pyver}-XStatic-JQuery-quicksearch
+Requires:   python%{pyver}-XStatic-Rickshaw
+Requires:   python%{pyver}-XStatic-Spin
+Requires:   python%{pyver}-XStatic-jquery-ui
+Requires:   python%{pyver}-XStatic-Bootstrap-Datepicker
+Requires:   python%{pyver}-XStatic-Angular-lrdragndrop
+Requires:   python%{pyver}-XStatic-Magic-Search
+Requires:   python%{pyver}-pint
+Requires:   python%{pyver}-PyYAML >= 3.10
+Requires:   python%{pyver}-memcached
+%endif
 
-BuildRequires: python2-django-compressor >= 2.0
+%if 0%{?with_translation_extraction_support} == 1
+Requires:   python%{pyver}-django-babel
+%endif
+
+BuildRequires: python%{pyver}-django-debreach
+BuildRequires: python%{pyver}-django-compressor >= 2.0
+BuildRequires: python%{pyver}-django-pyscss >= 2.0.2
+BuildRequires: python%{pyver}-XStatic
+BuildRequires: python%{pyver}-XStatic-Angular >= 1:1.5.8.0
+BuildRequires: python%{pyver}-XStatic-Angular-Bootstrap
+BuildRequires: python%{pyver}-XStatic-Angular-Schema-Form
+BuildRequires: python%{pyver}-XStatic-D3
+BuildRequires: python%{pyver}-XStatic-Font-Awesome
+BuildRequires: python%{pyver}-XStatic-JSEncrypt
+BuildRequires: python%{pyver}-XStatic-Jasmine
+BuildRequires: python%{pyver}-XStatic-Bootstrap-SCSS
+BuildRequires: python%{pyver}-XStatic-termjs
+BuildRequires: python%{pyver}-XStatic-smart-table
+BuildRequires: python%{pyver}-XStatic-Angular-FileUpload
+BuildRequires: python%{pyver}-XStatic-Angular-Gettext
+BuildRequires: python%{pyver}-XStatic-bootswatch
+BuildRequires: python%{pyver}-XStatic-roboto-fontface
+BuildRequires: python%{pyver}-XStatic-mdi
+BuildRequires: python%{pyver}-XStatic-objectpath
+BuildRequires: python%{pyver}-XStatic-tv4
+# bootstrap-scss requires at least python-scss >= 1.2.1
+BuildRequires: python%{pyver}-scss >= 1.3.4
+BuildRequires: fontawesome-fonts-web >= 4.1.0
+BuildRequires: python%{pyver}-oslo-concurrency
+BuildRequires: python%{pyver}-oslo-config
+BuildRequires: python%{pyver}-oslo-i18n
+BuildRequires: python%{pyver}-oslo-serialization
+BuildRequires: python%{pyver}-oslo-utils
+BuildRequires: python%{pyver}-oslo-policy
+BuildRequires: python%{pyver}-babel
+
+BuildRequires: python%{pyver}-pytz
+BuildRequires: systemd
+# STX 
+BuildRequires: systemd-devel
+
+# Handle python2 exception
+%if %{pyver} == 2
 BuildRequires: python-django-appconf
 BuildRequires: python-lesscpy
 BuildRequires: python-semantic_version
-BuildRequires: python2-django-pyscss >= 2.0.2
-BuildRequires: python2-XStatic
 BuildRequires: python-XStatic-jQuery
-BuildRequires: python2-XStatic-Angular >= 1:1.5.8.0
-BuildRequires: python2-XStatic-Angular-Bootstrap
-BuildRequires: python2-XStatic-Angular-Schema-Form
-BuildRequires: python2-XStatic-D3
-BuildRequires: python2-XStatic-Font-Awesome
 BuildRequires: python-XStatic-Hogan
 BuildRequires: python-XStatic-JQuery-Migrate
 BuildRequires: python-XStatic-JQuery-TableSorter
 BuildRequires: python-XStatic-JQuery-quicksearch
-BuildRequires: python2-XStatic-JSEncrypt
-BuildRequires: python2-XStatic-Jasmine
 BuildRequires: python-XStatic-Rickshaw
 BuildRequires: python-XStatic-Spin
 BuildRequires: python-XStatic-jquery-ui
 BuildRequires: python-XStatic-Bootstrap-Datepicker
-BuildRequires: python2-XStatic-Bootstrap-SCSS
-BuildRequires: python2-XStatic-termjs
-BuildRequires: python2-XStatic-smart-table
 BuildRequires: python-XStatic-Angular-lrdragndrop
-BuildRequires: python2-XStatic-Angular-FileUpload
 BuildRequires: python-XStatic-Magic-Search
-BuildRequires: python2-XStatic-Angular-Gettext
-BuildRequires: python2-XStatic-bootswatch
-BuildRequires: python2-XStatic-roboto-fontface
-BuildRequires: python2-XStatic-mdi
-BuildRequires: python2-XStatic-objectpath
-BuildRequires: python2-XStatic-tv4
-# bootstrap-scss requires at least python-scss >= 1.2.1
-BuildRequires: python2-scss >= 1.3.4
-BuildRequires: fontawesome-fonts-web >= 4.1.0
-BuildRequires: python2-oslo-concurrency
-BuildRequires: python2-oslo-config
-BuildRequires: python2-oslo-i18n
-BuildRequires: python2-oslo-serialization
-BuildRequires: python2-oslo-utils
-BuildRequires: python2-oslo-policy
-BuildRequires: python2-babel
 BuildRequires: python-pint
-
-BuildRequires: pytz
-BuildRequires: systemd
-# STX 
-BuildRequires: systemd-devel
+BuildRequires: python-memcached
+%else
+BuildRequires: python%{pyver}-django-appconf
+BuildRequires: python%{pyver}-lesscpy
+BuildRequires: python%{pyver}-semantic_version
+BuildRequires: python%{pyver}-XStatic-jQuery
+BuildRequires: python%{pyver}-XStatic-Hogan
+BuildRequires: python%{pyver}-XStatic-JQuery-Migrate
+BuildRequires: python%{pyver}-XStatic-JQuery-TableSorter
+BuildRequires: python%{pyver}-XStatic-JQuery-quicksearch
+BuildRequires: python%{pyver}-XStatic-Rickshaw
+BuildRequires: python%{pyver}-XStatic-Spin
+BuildRequires: python%{pyver}-XStatic-jquery-ui
+BuildRequires: python%{pyver}-XStatic-Bootstrap-Datepicker
+BuildRequires: python%{pyver}-XStatic-Angular-lrdragndrop
+BuildRequires: python%{pyver}-XStatic-Magic-Search
+BuildRequires: python%{pyver}-pint
+BuildRequires: python%{pyver}-memcached
+%endif
+BuildRequires: python%{pyver}-glanceclient
+BuildRequires: python%{pyver}-keystoneclient
+BuildRequires: python%{pyver}-novaclient >= 1:9.1.0
+BuildRequires: python%{pyver}-neutronclient
+BuildRequires: python%{pyver}-cinderclient
+BuildRequires: python%{pyver}-swiftclient
 
 %description -n openstack-dashboard
 Openstack Dashboard is a web user interface for Openstack. The package
@@ -221,37 +327,29 @@ provides a reference implementation using the Django Horizon project,
 mostly consisting of JavaScript and CSS to tie it altogether as a standalone
 site.
 
-
-# Turn OFF sphinx documentation in STX environment
-# Mock does not have /dev/log so sphinx-build will always fail
 %if 0%{?with_doc}
 %package doc
 Summary:    Documentation for Django Horizon
 Group:      Documentation
 
-Requires:   %{name} = %{epoch}:%{version}-%{release}
-BuildRequires: python-sphinx >= 1.1.3
+Requires:   python%{pyver}-django-horizon = %{epoch}:%{version}-%{release}
+BuildRequires: python%{pyver}-sphinx >= 1.1.3
 
 # Doc building basically means we have to mirror Requires:
-BuildRequires: python2-openstackdocstheme
-BuildRequires: python2-glanceclient
-BuildRequires: python2-keystoneclient
-BuildRequires: python2-novaclient >= 1:9.1.0
-BuildRequires: python2-neutronclient
-BuildRequires: python2-cinderclient
-BuildRequires: python2-swiftclient
+BuildRequires: python%{pyver}-openstackdocstheme
 
 %description doc
 Documentation for the Django Horizon application for talking with Openstack
-
 %endif
 
+%if 0%{rhosp} == 0
 %package -n openstack-dashboard-theme
 Summary: OpenStack web user interface reference implementation theme module
 Requires: openstack-dashboard = %{epoch}:%{version}-%{release}
 
 %description -n openstack-dashboard-theme
 Customization module for OpenStack Dashboard to provide a branded logo.
+%endif
 
 %prep
 %autosetup -n horizon-%{upstream_version} -S git
@@ -288,6 +386,11 @@ echo "recursive-include openstack_dashboard *.json *.pot .eslintrc"   >> MANIFES
 # MANIFEST needs to include pot files  under horizon
 echo "recursive-include horizon *.pot .eslintrc"   >> MANIFEST.in
 
+# Fix manage.py shebang
+sed -i 's/\/usr\/bin\/env python/\/usr\/bin\/env python%{pyver}/' manage.py
+
+# Fix python executable depending on python version
+sed -i 's/\/usr\/bin\/python /\/usr\/bin\/python%{pyver} /g' %{SOURCE3}
 
 %build
 # compile message strings
@@ -303,35 +406,36 @@ cd openstack_dashboard && django-admin compilemessages && cd ..
 #echo >> horizon.egg-info/SOURCES.txt
 #ls */locale/*/LC_MESSAGES/django*mo >> horizon.egg-info/SOURCES.txt
 export PBR_VERSION=%{version}
-%{__python} setup.py build
+%{pyver_build}
+%{pyver_build_wheel}
 
 # compress css, js etc.
 cp openstack_dashboard/local/local_settings.py.example openstack_dashboard/local/local_settings.py
 # get it ready for compressing later in puppet-horizon
 # STX: run compression on the controller
 # STX: turn off compression because /dev/log does not exist in mock
-#%{__python} manage.py collectstatic --noinput --clear
-#%{__python} manage.py compress --force
-
+#%{pyver_bin} manage.py collectstatic --noinput --clear
+#%{pyver_bin} manage.py compress --force
 
 %if 0%{?with_doc}
 # build docs
-export PYTHONPATH="$( pwd ):$PYTHONPATH"
-sphinx-build -b html doc/source html
+export PYTHONPATH=.
+sphinx-build-%{pyver} -b html doc/source html
+# Fix hidden-file-or-dir warnings
+rm -fr html/.doctrees html/.buildinfo
+%endif
 
 # undo hack
 cp openstack_dashboard/local/local_settings.py.example openstack_dashboard/local/local_settings.py
 
-# Fix hidden-file-or-dir warnings
-rm -fr html/.doctrees html/.buildinfo
-
-%endif
-
-%py2_build_wheel
-
 %install
-export PBR_VERSION=%{version}
-%{__python} setup.py install -O1 --skip-build --root %{buildroot}
+%{pyver_install}
+
+# drop httpd-conf snippet
+install -m 0644 -D -p %{SOURCE2} %{buildroot}%{_sysconfdir}/httpd/conf.d/openstack-dashboard.conf
+install -d -m 755 %{buildroot}%{_datadir}/openstack-dashboard
+install -d -m 755 %{buildroot}%{_sharedstatedir}/openstack-dashboard
+install -d -m 755 %{buildroot}%{_sysconfdir}/openstack-dashboard
 mkdir -p $RPM_BUILD_ROOT/wheels
 install -m 644 dist/*.whl $RPM_BUILD_ROOT/wheels/
 
@@ -343,11 +447,8 @@ install -m 755 -D -p %{SOURCE8} %{buildroot}/%{_bindir}/horizon-clearsessions
 install -m 755 -D -p %{SOURCE11} %{buildroot}/%{_bindir}/horizon-patching-restart
 install -m 755 -D -p %{SOURCE14} %{buildroot}/%{_bindir}/horizon-assets-compress
 
-# drop httpd-conf snippet
-install -m 0644 -D -p %{SOURCE2} %{buildroot}%{_sysconfdir}/httpd/conf.d/openstack-dashboard.conf
-install -d -m 755 %{buildroot}%{_datadir}/openstack-dashboard
-install -d -m 755 %{buildroot}%{_sharedstatedir}/openstack-dashboard
-install -d -m 755 %{buildroot}%{_sysconfdir}/openstack-dashboard
+# drop config snippet
+install -m 0644 -D -p %{SOURCE4} .
 
 # create directory for systemd snippet
 mkdir -p %{buildroot}%{_unitdir}/httpd.service.d/
@@ -355,12 +456,12 @@ cp %{SOURCE3} %{buildroot}%{_unitdir}/httpd.service.d/openstack-dashboard.conf
 
 
 # Copy everything to /usr/share
-mv %{buildroot}%{python_sitelib}/openstack_dashboard \
+mv %{buildroot}%{pyver_sitelib}/openstack_dashboard \
    %{buildroot}%{_datadir}/openstack-dashboard
-cp manage.py %{buildroot}%{_datadir}/openstack-dashboard
 # STX
 cp guni_config.py %{buildroot}%{_datadir}/openstack-dashboard
-rm -rf %{buildroot}%{python_sitelib}/openstack_dashboard
+cp manage.py %{buildroot}%{_datadir}/openstack-dashboard
+rm -rf %{buildroot}%{pyver_sitelib}/openstack_dashboard
 
 # remove unnecessary .po files
 find %{buildroot} -name django.po -exec rm '{}' \;
@@ -369,11 +470,17 @@ find %{buildroot} -name djangojs.po -exec rm '{}' \;
 # Move config to /etc, symlink it back to /usr/share
 mv %{buildroot}%{_datadir}/openstack-dashboard/openstack_dashboard/local/local_settings.py.example %{buildroot}%{_sysconfdir}/openstack-dashboard/local_settings
 # STX: we do not want to have this symlink, puppet will overwrite the content of local_settings
-#ln -s ../../../../../%{_sysconfdir}/openstack-dashboard/local_settings %{buildroot}%{_datadir}/openstack-dashboard/openstack_dashboard/local/local_settings.py
+#ln -s ../../../../..%{_sysconfdir}/openstack-dashboard/local_settings %{buildroot}%{_datadir}/openstack-dashboard/openstack_dashboard/local/local_settings.py
+
+%if 0%{?rhosp}
+mkdir -p %{buildroot}%{_sysconfdir}/openstack-dashboard/local_settings.d
+mv %{buildroot}%{_datadir}/openstack-dashboard/openstack_dashboard/local/local_settings.d/* %{buildroot}%{_sysconfdir}/openstack-dashboard/local_settings.d
+rmdir %{buildroot}%{_datadir}/openstack-dashboard/openstack_dashboard/local/local_settings.d
+ln -s ../../../../..%{_sysconfdir}/openstack-dashboard/local_settings.d %{buildroot}%{_datadir}/openstack-dashboard/openstack_dashboard/local/local_settings.d
+%endif
 
 mv %{buildroot}%{_datadir}/openstack-dashboard/openstack_dashboard/conf/*.json %{buildroot}%{_sysconfdir}/openstack-dashboard
 mv %{buildroot}%{_datadir}/openstack-dashboard/openstack_dashboard/conf/nova_policy.d %{buildroot}%{_sysconfdir}/openstack-dashboard
-
 
 %find_lang django --all-name
 
@@ -398,10 +505,7 @@ mkdir -p %{buildroot}%{_sysconfdir}/logrotate.d
 cp -a %{SOURCE5} %{buildroot}%{_sysconfdir}/logrotate.d/openstack-dashboard
 
 %check
-# don't run tests on rhel
-%if 0%{?rhel} == 0
-%{__python2} manage.py test horizon --settings=horizon.test.settings
-%endif
+%{pyver_bin} manage.py test horizon --settings=horizon.test.settings
 
 %post -n openstack-dashboard
 # ugly hack to set a unique SECRET_KEY
@@ -414,29 +518,32 @@ systemctl daemon-reload >/dev/null 2>&1 || :
 # update systemd unit files
 %{systemd_postun}
 
-%files -f horizon.lang
+%files -n python%{pyver}-django-horizon -f horizon.lang
 %doc README.rst openstack-dashboard-httpd-logging.conf
 %license LICENSE
-%dir %{python_sitelib}/horizon
-%{python_sitelib}/horizon/*.py*
-%{python_sitelib}/horizon/browsers
-%{python_sitelib}/horizon/conf
-%{python_sitelib}/horizon/contrib
-%{python_sitelib}/horizon/forms
-%{python_sitelib}/horizon/hacking
-%{python_sitelib}/horizon/management
-%{python_sitelib}/horizon/static
-%{python_sitelib}/horizon/tables
-%{python_sitelib}/horizon/tabs
-%{python_sitelib}/horizon/templates
-%{python_sitelib}/horizon/templatetags
-%{python_sitelib}/horizon/test
-%{python_sitelib}/horizon/utils
-%{python_sitelib}/horizon/workflows
-%{python_sitelib}/horizon/karma.conf.js
-%{python_sitelib}/horizon/middleware
-%{python_sitelib}/openstack_auth
-%{python_sitelib}/*.egg-info
+%dir %{pyver_sitelib}/horizon
+%{pyver_sitelib}/horizon/*.py*
+%{pyver_sitelib}/horizon/browsers
+%{pyver_sitelib}/horizon/conf
+%{pyver_sitelib}/horizon/contrib
+%{pyver_sitelib}/horizon/forms
+%{pyver_sitelib}/horizon/hacking
+%{pyver_sitelib}/horizon/management
+%{pyver_sitelib}/horizon/static
+%{pyver_sitelib}/horizon/tables
+%{pyver_sitelib}/horizon/tabs
+%{pyver_sitelib}/horizon/templates
+%{pyver_sitelib}/horizon/templatetags
+%{pyver_sitelib}/horizon/test
+%{pyver_sitelib}/horizon/utils
+%{pyver_sitelib}/horizon/workflows
+%{pyver_sitelib}/horizon/karma.conf.js
+%{pyver_sitelib}/horizon/middleware
+%{pyver_sitelib}/openstack_auth
+%{pyver_sitelib}/*.egg-info
+%if %{pyver} == 3
+%{pyver_sitelib}/horizon/__pycache__
+%endif
 
 %files -n openstack-dashboard -f dashboard.lang
 %license LICENSE
@@ -471,7 +578,21 @@ systemctl daemon-reload >/dev/null 2>&1 || :
 %dir %{_datadir}/openstack-dashboard/openstack_dashboard/locale/??_??
 %dir %{_datadir}/openstack-dashboard/openstack_dashboard/locale/??/LC_MESSAGES
 %dir %{_datadir}/openstack-dashboard/openstack_dashboard/locale/??_??/LC_MESSAGES
+
+%if 0%{?rhosp}
+%dir %attr(0750, root, apache) %{_sysconfdir}/openstack-dashboard/local_settings.d/
+%{_sysconfdir}/openstack-dashboard/local_settings.d/*.example
+%endif
+
 %{_datadir}/openstack-dashboard/openstack_dashboard/.eslintrc
+# fix installed (but unpackaged) files
+%{_datadir}/openstack-dashboard/openstack_dashboard/__pycache__
+%{_datadir}/openstack-dashboard/openstack_dashboard/dashboards/__pycache__
+
+%if %{pyver} == 3
+%{_datadir}/openstack-dashboard/openstack_dashboard/__pycache__
+%{_datadir}/openstack-dashboard/openstack_dashboard/dashboards/__pycache__
+%endif
 
 %dir %attr(0750, root, apache) %{_sysconfdir}/openstack-dashboard
 %dir %attr(0750, apache, apache) %{_sharedstatedir}/openstack-dashboard
@@ -497,17 +618,16 @@ systemctl daemon-reload >/dev/null 2>&1 || :
 
 
 %if 0%{?with_doc}
-
 %files doc
 %doc html
 %license LICENSE
-
 %endif
 
-
+%if 0%{rhosp} == 0
 %files -n openstack-dashboard-theme
 #%{_datadir}/openstack-dashboard/openstack_dashboard/dashboards/theme
 #%{_datadir}/openstack-dashboard/openstack_dashboard/enabled/_99_customization.*
+%endif
 
 %package wheels
 Summary: %{name} wheels
@@ -519,19 +639,15 @@ Contains python wheels for %{name}
 /wheels/*
 
 %changelog
-* Mon Dec 03 2018 RDO <dev@lists.rdoproject.org> 1:14.0.2-1
-- Update to 14.0.2
+* Thu Jan 23 2020 RDO <dev@lists.rdoproject.org> 1:16.1.0-1
+- Update to 16.1.0
 
-* Mon Oct 22 2018 RDO <dev@lists.rdoproject.org> 1:14.0.1-1
-- Update to 14.0.1
+* Wed Oct 16 2019 RDO <dev@lists.rdoproject.org> 1:16.0.0-1
+- Update to 16.0.0
 
-* Thu Aug 30 2018 RDO <dev@lists.rdoproject.org> 1:14.0.0-1
-- Update to 14.0.0
+* Fri Oct 11 2019 RDO <dev@lists.rdoproject.org> 1:16.0.0-0.2.0rc1
+- Update to 16.0.0.0rc2
 
-* Wed Aug 22 2018 RDO <dev@lists.rdoproject.org> 1:14.0.0-0.2.0rc1
-- Update to 14.0.0.0rc2
-
-* Mon Aug 20 2018 RDO <dev@lists.rdoproject.org> 1:14.0.0-0.1.0rc1
-- Update to 14.0.0.0rc1
-
+* Mon Sep 30 2019 RDO <dev@lists.rdoproject.org> 1:16.0.0-0.1.0rc1
+- Update to 16.0.0.0rc1
 
