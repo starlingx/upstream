@@ -1,7 +1,17 @@
-%{!?upstream_version: %global upstream_version %{version}%{?milestone}}
-%if 0%{?fedora} >= 24
-%global with_python3 1
+# Macros for py2/py3 compatibility
+%if 0%{?fedora} || 0%{?rhel} > 7
+%global pyver %{python3_pkgversion}
+%else
+%global pyver 2
 %endif
+%global pyver_bin python%{pyver}
+%global pyver_sitelib %python%{pyver}_sitelib
+%global pyver_install %py%{pyver}_install
+%global pyver_build %py%{pyver}_build
+%global pyver_build_wheel %{expand:%{py%{pyver}_build_wheel}}
+# End of macros for py2/py3 compatibility
+
+%{!?upstream_version: %global upstream_version %{version}%{?milestone}}
 
 # Disable docs until bs4 package is available
 %global with_doc 0
@@ -27,6 +37,7 @@ Summary:        An SDK for building applications to work with OpenStack
 License:        ASL 2.0
 URL:            http://www.openstack.org/
 Source0:        https://pypi.io/packages/source/o/%{pypi_name}/%{pypi_name}-%{upstream_version}.tar.gz
+
 BuildArch:      noarch
 
 BuildRequires:  git
@@ -34,152 +45,86 @@ BuildRequires:  git
 %description
 %{common_desc}
 
-%package -n python2-%{pypi_name}
+%package -n python%{pyver}-%{pypi_name}
 Summary:        An SDK for building applications to work with OpenStack
-%{?python_provide:%python_provide python2-%{pypi_name}}
+%{?python_provide:%python_provide python%{pyver}-%{pypi_name}}
 
-BuildRequires:  python2-devel
-BuildRequires:  python2-pip
-BuildRequires:  python2-wheel
-BuildRequires:  python2-pbr >= 2.0.0
-BuildRequires:  python2-sphinx
-BuildRequires:  python2-openstackdocstheme
-BuildRequires:  python2-keystoneauth1
-BuildRequires:  python2-appdirs
-BuildRequires:  python2-requestsexceptions
-BuildRequires:  python2-munch
-BuildRequires:  python2-jmespath
-BuildRequires:  python2-futures
-BuildRequires:  python2-jsonschema
-BuildRequires:  python2-os-service-types
+BuildRequires:  python%{pyver}-devel
+BuildRequires:  python%{pyver}-pbr >= 2.0.0
+BuildRequires:  python%{pyver}-keystoneauth1
+BuildRequires:  python%{pyver}-appdirs
+BuildRequires:  python%{pyver}-requestsexceptions
+BuildRequires:  python%{pyver}-munch
+BuildRequires:  python%{pyver}-jmespath
+BuildRequires:  python%{pyver}-jsonschema
+BuildRequires:  python%{pyver}-os-service-types
+BuildRequires:  python%{pyver}-wheel
 # Test requirements
-BuildRequires:  python2-deprecation
-BuildRequires:  python2-iso8601 >= 0.1.11
-BuildRequires:  python2-jsonpatch >= 1.6
-BuildRequires:  python2-subunit
-BuildRequires:  python2-oslotest
-BuildRequires:  python2-stestr
-BuildRequires:  python2-mock
-BuildRequires:  python2-testrepository
-BuildRequires:  python2-testscenarios
-BuildRequires:  python2-testtools
-BuildRequires:  python2-glanceclient
-%if 0%{?fedora} || 0%{?rhel} > 7
-BuildRequires:  python2-requests-mock
-BuildRequires:  python2-decorator
-BuildRequires:  python2-dogpile-cache
-BuildRequires:  python2-ipaddress
-BuildRequires:  python2-netifaces
-%else
-BuildRequires:  python-requests-mock
+BuildRequires:  python%{pyver}-iso8601 >= 0.1.11
+BuildRequires:  python%{pyver}-jsonpatch >= 1.16
+BuildRequires:  python%{pyver}-subunit
+BuildRequires:  python%{pyver}-oslotest
+BuildRequires:  python%{pyver}-oslo-config
+BuildRequires:  python%{pyver}-stestr
+BuildRequires:  python%{pyver}-mock
+BuildRequires:  python%{pyver}-testrepository
+BuildRequires:  python%{pyver}-testscenarios
+BuildRequires:  python%{pyver}-testtools
+BuildRequires:  python%{pyver}-requests-mock
+BuildRequires:  python%{pyver}-dogpile-cache
+BuildRequires:  python%{pyver}-ddt
+# Handle python2 exception
+%if %{pyver} == 2
 BuildRequires:  python-decorator
-BuildRequires:  python-dogpile-cache
 BuildRequires:  python-ipaddress
 BuildRequires:  python-netifaces
+BuildRequires:  python-futures
+%else
+BuildRequires:  python%{pyver}-decorator
+BuildRequires:  python%{pyver}-netifaces
 %endif
 
-Requires:       python2-deprecation
-Requires:       python2-jsonpatch >= 1.16
-Requires:       python2-keystoneauth1 >= 3.8.0
-Requires:       python2-six
-Requires:       python2-pbr >= 2.0.0
-Requires:       python2-appdirs
-Requires:       python2-requestsexceptions >= 1.2.0
-Requires:       python2-munch
-Requires:       python2-jmespath
-Requires:       python2-futures
-Requires:       python2-iso8601
-Requires:       python2-os-service-types >= 1.2.0
-%if 0%{?fedora} || 0%{?rhel} > 7
-Requires:       python2-decorator
-Requires:       python2-dogpile-cache
-Requires:       python2-ipaddress
-Requires:       python2-netifaces
-Requires:       python2-pyyaml
-%else
+Requires:       python%{pyver}-cryptography >= 2.1
+Requires:       python%{pyver}-jsonpatch >= 1.16
+Requires:       python%{pyver}-keystoneauth1 >= 3.16.0
+Requires:       python%{pyver}-six
+Requires:       python%{pyver}-pbr >= 2.0.0
+Requires:       python%{pyver}-appdirs
+Requires:       python%{pyver}-requestsexceptions >= 1.2.0
+Requires:       python%{pyver}-munch
+Requires:       python%{pyver}-jmespath
+Requires:       python%{pyver}-iso8601
+Requires:       python%{pyver}-os-service-types >= 1.7.0
+Requires:       python%{pyver}-dogpile-cache
+# Handle python2 exception
+%if %{pyver} == 2
 Requires:       python-decorator
-Requires:       python-dogpile-cache
 Requires:       python-ipaddress
 Requires:       python-netifaces
+Requires:       python-futures
 Requires:       PyYAML
+%else
+Requires:       python%{pyver}-decorator
+Requires:       python%{pyver}-netifaces
+Requires:       python%{pyver}-PyYAML
 %endif
 
-%description -n python2-%{pypi_name}
+%description -n python%{pyver}-%{pypi_name}
 %{common_desc}
 
-%package -n python2-%{pypi_name}-tests
+%package -n python%{pyver}-%{pypi_name}-tests
 Summary:        An SDK for building applications to work with OpenStack - test files
 
-Requires: python2-%{pypi_name} = %{version}-%{release}
+Requires: python%{pyver}-%{pypi_name} = %{version}-%{release}
 
-%description -n python2-%{pypi_name}-tests
+%description -n python%{pyver}-%{pypi_name}-tests
 %{common_desc_tests}
-
-%if 0%{?with_python3}
-%package -n python3-%{pypi_name}
-Summary:        An SDK for building applications to work with OpenStack
-%{?python_provide:%python_provide python3-%{pypi_name}}
-
-BuildRequires:  python3-devel
-BuildRequires:  python3-pbr >= 2.0.0
-BuildRequires:  python3-keystoneauth1
-BuildRequires:  python3-dogpile-cache
-BuildRequires:  python3-appdirs
-BuildRequires:  python3-requestsexceptions
-BuildRequires:  python3-munch
-BuildRequires:  python3-decorator
-BuildRequires:  python3-jmespath
-BuildRequires:  python3-netifaces
-BuildRequires:  python3-jsonschema
-BuildRequires:  python3-os-service-types
-# Test requirements
-BuildRequires:  python3-deprecation
-BuildRequires:  python3-iso8601 >= 0.1.11
-BuildRequires:  python3-jsonpatch >= 1.6
-BuildRequires:  python3-subunit
-BuildRequires:  python3-oslotest
-BuildRequires:  python3-stestr
-BuildRequires:  python3-mock
-BuildRequires:  python3-requests-mock
-BuildRequires:  python3-testrepository
-BuildRequires:  python3-testscenarios
-BuildRequires:  python3-testtools
-BuildRequires:  python3-glanceclient
-
-Requires:       python3-deprecation
-Requires:       python3-jsonpatch >= 1.16
-Requires:       python3-keystoneauth1 >= 3.8.0
-Requires:       python3-six
-Requires:       python3-pbr >= 2.0.0
-Requires:       python3-PyYAML
-Requires:       python3-appdirs
-Requires:       python3-requestsexceptions >= 1.2.0
-Requires:       python3-dogpile-cache
-Requires:       python3-munch
-Requires:       python3-decorator
-Requires:       python3-jmespath
-Requires:       python3-netifaces
-Requires:       python3-jsonschema
-Requires:       python3-iso8601
-Requires:       python3-os-service-types >= 1.2.0
-
-%description -n python3-%{pypi_name}
-%{common_desc}
-
-%package -n python3-%{pypi_name}-tests
-Summary:        An SDK for building applications to work with OpenStack - test files
-
-Requires: python3-%{pypi_name} = %{version}-%{release}
-
-%description -n python3-%{pypi_name}-tests
-%{common_desc_tests}
-
-%endif
-
 
 %if 0%{?with_doc}
 %package -n python-%{pypi_name}-doc
 Summary:        An SDK for building applications to work with OpenStack - documentation
+BuildRequires:  python%{pyver}-openstackdocstheme
+BuildRequires:  python%{pyver}-sphinx
 
 %description -n python-%{pypi_name}-doc
 A collection of libraries for building applications to work with OpenStack
@@ -190,77 +135,51 @@ clouds - documentation.
 %autosetup -n %{pypi_name}-%{upstream_version} -S git
 # Let RPM handle the requirements
 rm -rf {,test-}requirements.txt
+# This unit test requires python-prometheus, which is optional and not needed
+rm -f openstack/tests/unit/test_stats.py
 
 %build
-export PBR_VERSION=%{version}
-%py2_build
-%py2_build_wheel
-
-%if 0%{?with_python3}
-%{py3_build}
-%endif
+%{pyver_build}
+%{pyver_build_wheel}
 
 %if 0%{?with_doc}
-# generate html docs 
-sphinx-build -b html doc/source html
-# remove the sphinx-build leftovers
+# generate html docs
+sphinx-build-%{pyver} -b html doc/source html
+# remove the sphinx-build-%{pyver} leftovers
 rm -rf html/.{doctrees,buildinfo}
 %endif
 
 %install
-export PBR_VERSION=%{version}
-%if 0%{?with_python3}
-%{py3_install}
-%endif
-%py2_install
+%{pyver_install}
 
 # STX: stage wheels
 mkdir -p $RPM_BUILD_ROOT/wheels
 install -m 644 dist/*.whl $RPM_BUILD_ROOT/wheels/
 
 %check
-%if 0%{?do_check}
 export OS_STDOUT_CAPTURE=true
 export OS_STDERR_CAPTURE=true
-export OS_TEST_TIMEOUT=10
-stestr --test-path ./openstack/tests/unit run
+export OS_TEST_TIMEOUT=20
+# FIXME(jpena) we are skipping some unit tests due to
+# https://storyboard.openstack.org/#!/story/2005677
+PYTHON=python%{pyver} stestr-%{pyver} --test-path ./openstack/tests/unit run --black-regex 'test_wait_for_task_'
 
-%if 0%{?with_python3}
-rm -rf .testrepository
-stestr-3 --test-path ./openstack/tests/unit run
-%endif
-%endif
-
-
-%files -n python2-%{pypi_name}
+%files -n python%{pyver}-%{pypi_name}
 %doc README.rst
 %license LICENSE
 %{_bindir}/openstack-inventory
-%{python2_sitelib}/openstack
-%{python2_sitelib}/%{pypi_name}-*.egg-info
-%exclude %{python2_sitelib}/openstack/tests
+%{pyver_sitelib}/openstack
+%{pyver_sitelib}/%{pypi_name}-*.egg-info
+%exclude %{pyver_sitelib}/openstack/tests
 
-%files -n python2-%{pypi_name}-tests
-%{python2_sitelib}/openstack/tests
+%files -n python%{pyver}-%{pypi_name}-tests
+%{pyver_sitelib}/openstack/tests
 
 %if 0%{?with_doc}
 %files -n python-%{pypi_name}-doc
 %doc html
 %license LICENSE
 %endif
-
-%if 0%{?with_python3}
-%files -n python3-%{pypi_name}
-%doc README.rst
-%license LICENSE
-%{python3_sitelib}/openstack
-%{python3_sitelib}/%{pypi_name}-*.egg-info
-%exclude %{python3_sitelib}/openstack/tests
-
-%files -n python3-%{pypi_name}-tests
-%{python3_sitelib}/openstack/tests
-%endif
-
 
 %package wheels
 Summary: %{name} wheels
@@ -271,9 +190,13 @@ Contains python wheels for %{name}
 %files wheels
 /wheels/*
 
-
 %changelog
-* Thu Aug 09 2018 RDO <dev@lists.rdoproject.org> 0.17.2-1
-- Update to 0.17.2
+* Fri Oct 04 2019 OSP Prod Chain <dev-null@redhat.com> 0.36.0-2
+- Update patches
 
+* Wed Oct 02 2019 Joel Capitao <jcapitao@redhat.com> 0.36.0-2
+- Removed python2 subpackages in no el7 distros
+
+* Thu Sep 19 2019 RDO <dev@lists.rdoproject.org> 0.36.0-1
+- Update to 0.36.0
 
