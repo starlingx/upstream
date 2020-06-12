@@ -1,8 +1,16 @@
-%{!?upstream_version: %global upstream_version %{version}%{?milestone}}
-
-%if 0%{?fedora}
-%global with_python3 1
+# Macros for py2/py3 compatibility
+%if 0%{?fedora} || 0%{?rhel} > 7
+%global pyver %{python3_pkgversion}
+%else
+%global pyver 2
 %endif
+%global pyver_bin python%{pyver}
+%global pyver_sitelib %{expand:%{python%{pyver}_sitelib}}
+%global pyver_install %{expand:%{py%{pyver}_install}}
+%global pyver_build %{expand:%{py%{pyver}_build}}
+%global pyver_build_wheel %{expand:%{py%{pyver}_build_wheel}}
+# End of macros for py2/py3 compatibility
+%{!?upstream_version: %global upstream_version %{version}%{?milestone}}
 
 %global sname ironicclient
 
@@ -14,8 +22,8 @@ Release:        1%{?_tis_dist}.%{tis_patch_ver}
 Summary:        Python client for Ironic
 
 License:        ASL 2.0
-URL:            https://pypi.python.org/pypi/python-ironicclient
-Source0:        https://tarballs.openstack.org/python-ironicclient/python-ironicclient-%{version}%{?milestone}.tar.gz
+URL:            https://pypi.python.org/pypi/python-%{sname}
+Source0:        https://tarballs.openstack.org/python-%{sname}/python-%{sname}-%{version}%{?milestone}.tar.gz
 BuildArch:      noarch
 
 
@@ -23,68 +31,41 @@ BuildArch:      noarch
 %{common_desc}
 
 
-%package -n python2-%{sname}
+%package -n python%{pyver}-%{sname}
 Summary:        Python client for Ironic
+%{?python_provide:%python_provide python%{pyver}-%{sname}}
+%if %{pyver} == 3
+Obsoletes: python2-%{sname} < %{version}-%{release}
+%endif
 
-BuildRequires:  python2-devel
-BuildRequires:  python2-pbr >= 2.0.0
-BuildRequires:  python2-setuptools
-BuildRequires:  python2-pip
-BuildRequires:  python2-wheel
+BuildRequires:  python%{pyver}-devel
+BuildRequires:  python%{pyver}-pbr >= 2.0.0
+BuildRequires:  python%{pyver}-setuptools
+BuildRequires:  python%{pyver}-wheel
 
-Requires:       python2-appdirs >= 1.3.0
-Requires:       python2-keystoneauth1 >= 3.4.0
-Requires:       python2-pbr >= 2.0.0
-Requires:       python2-six >= 1.10.0
-Requires:       python2-osc-lib >= 1.10.0
-Requires:       python2-oslo-i18n >= 3.15.3
-Requires:       python2-oslo-serialization >= 2.18.0
-Requires:       python2-oslo-utils >= 3.33.0
-Requires:       python2-oslo-config >= 5.2.0
-Requires:       python2-requests
-%if 0%{?fedora} > 0
-Requires:       python2-dogpile-cache >= 0.6.2
-Requires:       python2-jsonschema
-Requires:       python2-pyyaml
-%else
+Requires:       genisoimage
+Requires:       python%{pyver}-appdirs >= 1.3.0
+Requires:       python%{pyver}-keystoneauth1 >= 3.4.0
+Requires:       python%{pyver}-pbr >= 2.0.0
+Requires:       python%{pyver}-six >= 1.10.0
+Requires:       python%{pyver}-osc-lib >= 1.10.0
+Requires:       python%{pyver}-oslo-i18n >= 3.15.3
+Requires:       python%{pyver}-oslo-serialization >= 2.18.0
+Requires:       python%{pyver}-oslo-utils >= 3.33.0
+Requires:       python%{pyver}-requests
+# Handle python2 exception
+%if %{pyver} == 2
 Requires:       python-dogpile-cache >= 0.6.2
 Requires:       python-jsonschema
 Requires:       PyYAML
+%else
+Requires:       python%{pyver}-dogpile-cache >= 0.6.2
+Requires:       python%{pyver}-jsonschema
+Requires:       python%{pyver}-PyYAML
 %endif
 
-%{?python_provide:%python_provide python2-%{sname}}
-
-%description -n python2-%{sname}
+%description -n python%{pyver}-%{sname}
 %{common_desc}
-
-
-%if 0%{?with_python3}
-%package -n python3-%{sname}
-Summary:        Python client for Ironic
-
-BuildRequires:  python3-devel
-BuildRequires:  python3-pbr >= 2.0.0
-BuildRequires:  python3-setuptools
-
-Requires:       python3-appdirs >= 1.3.0
-Requires:       python3-dogpile-cache >= 0.6.2
-Requires:       python3-jsonschema
-Requires:       python3-keystoneauth1 >= 3.4.0
-Requires:       python3-pbr >= 2.0.0
-Requires:       python3-six >= 1.10.0
-Requires:       python3-osc-lib >= 1.10.0
-Requires:       python3-oslo-i18n >= 3.15.3
-Requires:       python3-oslo-serialization >= 2.18.0
-Requires:       python3-oslo-utils >= 3.33.0
-Requires:       python3-oslo-config >= 5.2.0
-Requires:       python3-requests
-Requires:       python3-PyYAML
-
-%{?python_provide:%python_provide python3-%{sname}}
-
-%description -n python3-%{sname}
-%{common_desc}
-%endif
 
 %prep
 %setup -q -n %{name}-%{upstream_version}
@@ -95,37 +76,21 @@ rm -rf {test-,}requirements.txt tools/{pip,test}-requires
 
 %build
 export PBR_VERSION=%{version}
-%py2_build
-%py2_build_wheel
-%if 0%{?with_python3}
-%py3_build
-%endif
-
+%{pyver_build}
+%{pyver_build_wheel}
 
 %install
 export PBR_VERSION=%{version}
-%if 0%{?with_python3}
-%py3_install
-%endif
-
-%py2_install
+%{pyver_install}
 
 mkdir -p $RPM_BUILD_ROOT/wheels
 install -m 644 dist/*.whl $RPM_BUILD_ROOT/wheels/
 
-%files -n python2-%{sname}
+%files -n python%{pyver}-%{sname}
 %doc README.rst
 %license LICENSE
-%{python2_sitelib}/ironicclient*
-%{python2_sitelib}/python_ironicclient*
-
-%if 0%{?with_python3}
-%files -n python3-%{sname}
-%doc README.rst
-%license LICENSE
-%{python3_sitelib}/ironicclient*
-%{python3_sitelib}/python_ironicclient*
-%endif
+%{pyver_sitelib}/%{sname}*
+%{pyver_sitelib}/python_%{sname}*
 
 %package wheels
 Summary: %{name} wheels
@@ -136,8 +101,13 @@ Contains python wheels for %{name}
 %files wheels
 /wheels/*
 
-
 %changelog
-* Fri Aug 10 2018 RDO <dev@lists.rdoproject.org> 2.5.0-1
-- Update to 2.5.0
+* Thu Jan 16 2020 RDO <dev@lists.rdoproject.org> 3.1.1-1
+- Update to 3.1.1
+
+* Thu Sep 26 2019 RDO <dev@lists.rdoproject.org> 3.1.0-1
+- Update to 3.1.0
+
+* Mon Sep 23 2019 RDO <dev@lists.rdoproject.org> 3.0.0-1
+- Update to 3.0.0
 
