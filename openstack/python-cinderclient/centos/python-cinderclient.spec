@@ -1,9 +1,20 @@
+# Macros for py2/py3 compatibility
+%if 0%{?fedora} || 0%{?rhel} > 7
+%global pyver %{python3_pkgversion}
+%else
+%global pyver 2
+%endif
+%global pyver_bin python%{pyver}
+%global pyver_sitelib %{expand:%{python%{pyver}_sitelib}}
+%global pyver_install %{expand:%{py%{pyver}_install}}
+%global pyver_build %{expand:%{py%{pyver}_build}}
+%global pyver_build_wheel %{expand:%{py%{pyver}_build_wheel}}
+# End of macros for py2/py3 compatibility
 %{!?upstream_version: %global upstream_version %{version}%{?milestone}}
 
 %global sname cinderclient
-%if 0%{?fedora}
-%global with_python3 1
-%endif
+
+%global with_doc 1
 
 %global common_desc \
 Client library (cinderclient python module) and command line utility \
@@ -25,78 +36,42 @@ BuildRequires:    git
 %description
 %{common_desc}
 
-%package -n python2-%{sname}
+%package -n python%{pyver}-%{sname}
 Summary:          Python API and CLI for OpenStack Cinder
-%{?python_provide:%python_provide python2-%{sname}}
+%{?python_provide:%python_provide python%{pyver}-%{sname}}
 
-BuildRequires:    python2-devel
-BuildRequires:    python2-setuptools
-BuildRequires:    python2-pip
-BuildRequires:    python2-wheel
-BuildRequires:    python2-pbr
-%if 0%{?fedora} > 0
-BuildRequires:    python2-d2to1
-%else
-BuildRequires:    python-d2to1
-%endif
+BuildRequires:    python%{pyver}-devel
+BuildRequires:    python%{pyver}-setuptools
+BuildRequires:    python%{pyver}-pbr
+BuildRequires:    python%{pyver}-wheel
 
-Requires:         python2-babel
-Requires:         python2-pbr
-Requires:         python2-prettytable
-Requires:         python2-requests
-Requires:         python2-six
-Requires:         python2-keystoneauth1 >= 3.4.0
-Requires:         python2-oslo-i18n >= 3.15.3
-Requires:         python2-oslo-utils >= 3.33.0
-%if 0%{?fedora} > 0
-Requires:         python2-simplejson
-%else
-Requires:         python-simplejson
-%endif
+Requires:         python%{pyver}-babel
+Requires:         python%{pyver}-pbr
+Requires:         python%{pyver}-prettytable
+Requires:         python%{pyver}-requests
+Requires:         python%{pyver}-six
+Requires:         python%{pyver}-keystoneauth1 >= 3.4.0
+Requires:         python%{pyver}-oslo-i18n >= 3.15.3
+Requires:         python%{pyver}-oslo-utils >= 3.33.0
+Requires:         python%{pyver}-simplejson
 
-%description -n python2-%{sname}
+%description -n python%{pyver}-%{sname}
 %{common_desc}
 
-
-%if 0%{?with_python3}
-%package -n python3-%{sname}
-Summary:          Python API and CLI for OpenStack Cinder
-%{?python_provide:%python_provide python3-%{sname}}
-
-BuildRequires:    python3-devel
-BuildRequires:    python3-setuptools
-BuildRequires:    python3-pbr
-BuildRequires:    python3-d2to1
-
-Requires:         python3-babel
-Requires:         python3-pbr
-Requires:         python3-prettytable
-Requires:         python3-requests
-Requires:         python3-setuptools
-Requires:         python3-simplejson
-Requires:         python3-six
-Requires:         python3-keystoneauth1 >= 3.4.0
-Requires:         python3-oslo-i18n >= 3.15.3
-Requires:         python3-oslo-utils >= 3.33.0
-
-%description -n python3-%{sname}
-%{common_desc}
-%endif
-
-
+%if 0%{?with_doc}
 %package doc
 Summary:          Documentation for OpenStack Cinder API Client
 Group:            Documentation
 
-BuildRequires:    python-reno
-BuildRequires:    python-sphinx
-BuildRequires:    python-openstackdocstheme
+BuildRequires:    python%{pyver}-reno
+BuildRequires:    python%{pyver}-sphinx
+BuildRequires:    python%{pyver}-openstackdocstheme
 
 %description      doc
 %{common_desc}
 
 This package contains auto-generated documentation.
-
+%endif
 
 %prep
 %autosetup -n %{name}-%{upstream_version} -S git
@@ -108,66 +83,50 @@ rm -rf python_cinderclient.egg-info
 rm -f {,test-}requirements.txt
 
 %build
-export PBR_VERSION=%{version}
-%py2_build
-%py2_build_wheel
-%if 0%{?with_python3}
-%py3_build
-%endif
+%{pyver_build}
+%{pyver_build_wheel}
 
-sphinx-build -W -b html doc/source doc/build/html
-sphinx-build -W -b man doc/source doc/build/man
+%if 0%{?with_doc}
+sphinx-build-%{pyver} -W -b html doc/source doc/build/html
+sphinx-build-%{pyver} -W -b man doc/source doc/build/man
 
 # Fix hidden-file-or-dir warnings
 rm -fr doc/build/html/.doctrees doc/build/html/.buildinfo
-
-%install
-export PBR_VERSION=%{version}
-%if 0%{?with_python3}
-%py3_install
-mv %{buildroot}%{_bindir}/cinder %{buildroot}%{_bindir}/cinder-%{python3_version}
-ln -s ./cinder-%{python3_version} %{buildroot}%{_bindir}/cinder-3
-# Delete tests
-rm -fr %{buildroot}%{python3_sitelib}/cinderclient/tests
 %endif
 
-%py2_install
+%install
+%{pyver_install}
+# Create a versioned binary for backwards compatibility until everything is pure py3
+ln -s cinder %{buildroot}%{_bindir}/cinder-%{pyver}
+
 mkdir -p $RPM_BUILD_ROOT/wheels
 install -m 644 dist/*.whl $RPM_BUILD_ROOT/wheels/
-mv %{buildroot}%{_bindir}/cinder %{buildroot}%{_bindir}/cinder-%{python2_version}
-ln -s ./cinder-%{python2_version} %{buildroot}%{_bindir}/cinder-2
-# Delete tests
-rm -fr %{buildroot}%{python2_sitelib}/cinderclient/tests
 
-ln -s ./cinder-2 %{buildroot}%{_bindir}/cinder
+# Delete tests
+rm -fr %{buildroot}%{pyver_sitelib}/cinderclient/tests
 
 install -p -D -m 644 tools/cinder.bash_completion %{buildroot}%{_sysconfdir}/bash_completion.d/cinder.bash_completion
 
+%if 0%{?with_doc}
 install -p -D -m 644 doc/build/man/cinder.1 %{buildroot}%{_mandir}/man1/cinder.1
+%endif
 
-
-%files -n python2-%{sname}
+%files -n python%{pyver}-%{sname}
 %doc README.rst
 %license LICENSE
 %{_bindir}/cinder
-%{_bindir}/cinder-2*
-%{python2_sitelib}/cinderclient
-%{python2_sitelib}/*.egg-info
+%{_bindir}/cinder-%{pyver}
+%{pyver_sitelib}/cinderclient
+%{pyver_sitelib}/*.egg-info
 %{_sysconfdir}/bash_completion.d/cinder.bash_completion
+%if 0%{?with_doc}
 %{_mandir}/man1/cinder.1*
-
-%if 0%{?with_python3}
-%files -n python3-%{sname}
-%doc README.rst
-%license LICENSE
-%{_bindir}/cinder-3*
-%{python3_sitelib}/cinderclient
-%{python3_sitelib}/*.egg-info
 %endif
 
+%if 0%{?with_doc}
 %files doc
 %doc doc/build/html
-
+%endif
 
 %package wheels
 Summary: %{name} wheels
@@ -179,6 +138,6 @@ Contains python wheels for %{name}
 /wheels/*
 
 %changelog
-* Thu Aug 09 2018 RDO <dev@lists.rdoproject.org> 4.0.1-1
-- Update to 4.0.1
+* Thu Sep 19 2019 RDO <dev@lists.rdoproject.org> 5.0.0-1
+- Update to 5.0.0
 
