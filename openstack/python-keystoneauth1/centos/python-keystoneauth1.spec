@@ -8,6 +8,7 @@
 %global pyver_sitelib %python%{pyver}_sitelib
 %global pyver_install %py%{pyver}_install
 %global pyver_build %py%{pyver}_build
+%global pyver_build_wheel %{expand:%{py%{pyver}_build_wheel}}
 # End of macros for py2/py3 compatibility
 %global pypi_name keystoneauth1
 
@@ -44,10 +45,11 @@ BuildRequires: python%{pyver}-devel
 BuildRequires: python%{pyver}-setuptools
 BuildRequires: python%{pyver}-six
 BuildRequires: python%{pyver}-pbr >= 2.0.0
+BuildRequires: python%{pyver}-wheel
 
 # test requires
-#BuildRequires: python%{pyver}-betamax >= 0.7.0
-BuildRequires: python-betamax >= 0.7.0
+BuildRequires: python%{pyver}-betamax >= 0.7.0
+#BuildRequires: python-betamax >= 0.7.0
 BuildRequires: python%{pyver}-fixtures >= 1.3.1
 BuildRequires: python%{pyver}-mock
 BuildRequires: python%{pyver}-oslotest
@@ -71,7 +73,6 @@ BuildRequires: python-pep8
 BuildRequires: python%{pyver}-PyYAML
 BuildRequires: python%{pyver}-lxml
 BuildRequires: python%{pyver}-requests-kerberos
-BuildRequires: python%{pyver}-pep8
 %endif
 
 Requires:      python%{pyver}-iso8601 >= 0.1.11
@@ -107,9 +108,12 @@ sed -i '/sphinx.ext.intersphinx.*$/d'  doc/source/conf.py
 rm -rf {test-,}requirements.txt
 # Remove bundled egg-info
 rm -rf %{pypi_name}.egg-info
+# remove syntax tests
+rm keystoneauth1/tests/unit/test_hacking_checks.py
 
 %build
 %{pyver_build}
+%{pyver_build_wheel}
 
 %install
 %{pyver_install}
@@ -122,6 +126,9 @@ export PYTHONPATH=.
 sphinx-build-%{pyver} -b html -d doc/build/doctrees doc/source doc/build/html
 rm -rf doc/build/html/.buildinfo
 %endif
+
+mkdir -p $RPM_BUILD_ROOT/wheels
+install -m 644 dist/*.whl $RPM_BUILD_ROOT/wheels/
 
 %check
 PYTHON=python%{pyver} stestr-%{pyver} run
@@ -137,6 +144,15 @@ PYTHON=python%{pyver} stestr-%{pyver} run
 %license LICENSE
 %doc doc/build/html
 %endif
+
+%package wheels
+Summary: %{name} wheels
+
+%description wheels
+Contains python wheels for %{name}
+
+%files wheels
+/wheels/*
 
 %changelog
 * Thu Oct 03 2019 Joel Capitao <jcapitao@redhat.com> 3.17.1-2
