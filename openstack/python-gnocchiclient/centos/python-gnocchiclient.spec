@@ -1,13 +1,21 @@
-%{!?python2_shortver: %global python2_shortver %(%{__python2} -c 'import sys; print(str(sys.version_info.major) + "." + str(sys.version_info.minor))')}
-%{!?python3_shortver: %global python3_shortver %(%{__python3} -c 'import sys; print(str(sys.version_info.major) + "." + str(sys.version_info.minor))')}
+# Macros for py2/py3 compatibility
+%if 0%{?fedora} || 0%{?rhel} > 7
+%global pyver %{python3_pkgversion}
+%else
+%global pyver 2
+%endif
+%global pyver_bin python%{pyver}
+%global pyver_sitelib %{expand:%{python%{pyver}_sitelib}}
+%global pyver_install %{expand:%{py%{pyver}_install}}
+%global pyver_build %{expand:%{py%{pyver}_build}}
+%global pyver_build_wheel %{expand:%{py%{pyver}_build_wheel}}
+# End of macros for py2/py3 compatibility
 
 %global pypi_name gnocchiclient
 
 %{!?upstream_version: %global upstream_version %{version}%{?milestone}}
 
-%if 0%{?fedora} >= 24
-%global with_python3 1
-%endif
+%global with_doc 1
 
 %global common_desc \
 This is a client library for Gnocchi built on the Gnocchi API. It \
@@ -21,120 +29,79 @@ Summary:          Python API and CLI for OpenStack Gnocchi
 License:          ASL 2.0
 URL:              https://github.com/openstack/%{name}
 Source0:          https://pypi.io/packages/source/g/%{pypi_name}/%{pypi_name}-%{upstream_version}.tar.gz
-# FIXME(jpena): remove this patch once a version > 7.0.1 is released
-%if "%{version}" == "7.0.1"
-Patch0001:        0001-Avoid-using-openstack-doc-tools.patch
-%endif
 BuildArch:        noarch
 
+%description
+%{common_desc}
 
-%package -n python2-%{pypi_name}
+%package -n python%{pyver}-%{pypi_name}
 Summary:          Python API and CLI for OpenStack Gnocchi
-%{?python_provide:%python_provide python2-gnocchiclient}
-
-
-BuildRequires:    python2-setuptools
-BuildRequires:    python2-pip
-BuildRequires:    python2-wheel
-BuildRequires:    python2-devel
-BuildRequires:    python2-pbr
-BuildRequires:    python2-tools
-
-Requires:         python2-cliff >= 2.10
-Requires:         python2-osc-lib >= 1.8.0
-Requires:         python2-keystoneauth1 >= 2.0.0
-Requires:         python2-six >= 1.10.0
-Requires:         python2-futurist
-Requires:         python2-ujson
-Requires:         python2-pbr
-Requires:         python2-iso8601
-Requires:         python2-dateutil
-Requires:         python2-debtcollector
-%if 0%{?fedora} || 0%{?rhel} > 7
-Requires:         python2-monotonic
-%else
-Requires:         python-monotonic
+%{?python_provide:%python_provide python%{pyver}-gnocchiclient}
+%if %{pyver} == 3
+Obsoletes: python2-%{pypi_name} < %{version}-%{release}
 %endif
 
-%description -n python2-%{pypi_name}
+
+BuildRequires:    python%{pyver}-setuptools
+BuildRequires:    python%{pyver}-devel
+BuildRequires:    python%{pyver}-pbr
+BuildRequires:    python%{pyver}-tools
+BuildRequires:    python%{pyver}-wheel
+
+Requires:         python%{pyver}-cliff >= 2.10
+Requires:         python%{pyver}-osc-lib >= 1.8.0
+Requires:         python%{pyver}-keystoneauth1 >= 2.0.0
+Requires:         python%{pyver}-six >= 1.10.0
+Requires:         python%{pyver}-futurist
+Requires:         python%{pyver}-ujson
+Requires:         python%{pyver}-pbr
+Requires:         python%{pyver}-iso8601
+Requires:         python%{pyver}-dateutil
+Requires:         python%{pyver}-debtcollector
+Requires:         python%{pyver}-monotonic
+
+%description -n python%{pyver}-%{pypi_name}
 %{common_desc}
 
 
+%if 0%{?with_doc}
 %package -n python-%{pypi_name}-doc
 Summary:          Documentation for OpenStack Gnocchi API Client
 Group:            Documentation
 
-BuildRequires:    python2-sphinx
-BuildRequires:    python2-cliff >= 2.10
-BuildRequires:    python2-keystoneauth1
-BuildRequires:    python2-six
-BuildRequires:    python2-futurist
-BuildRequires:    python2-ujson
-BuildRequires:    python2-sphinx_rtd_theme
+BuildRequires:    python%{pyver}-sphinx
+BuildRequires:    python%{pyver}-cliff >= 2.10
+BuildRequires:    python%{pyver}-keystoneauth1
+BuildRequires:    python%{pyver}-six
+BuildRequires:    python%{pyver}-futurist
+BuildRequires:    python%{pyver}-ujson
+BuildRequires:    python%{pyver}-sphinx_rtd_theme
 # test
-BuildRequires:    python2-babel
+BuildRequires:    python%{pyver}-babel
 # Runtime requirements needed during documentation build
-BuildRequires:    python2-osc-lib
-BuildRequires:    python2-dateutil
+BuildRequires:    python%{pyver}-osc-lib
+BuildRequires:    python%{pyver}-dateutil
+BuildRequires:    python%{pyver}-monotonic
 
 %description      doc
 %{common_desc}
 
 This package contains auto-generated documentation.
-
-%package -n python2-%{pypi_name}-tests
-Summary:          Python API and CLI for OpenStack Gnocchi Tests
-Requires:         python2-%{pypi_name} = %{version}-%{release}
-
-%description -n python2-%{pypi_name}-tests
-%{common_desc}
-
-%if 0%{?with_python3}
-%package -n python3-%{pypi_name}
-Summary:          Python API and CLI for OpenStack Gnocchi
-
-%{?python_provide:%python_provide python3-%{pypi_name}}
-
-BuildRequires:    python3-devel
-BuildRequires:    python3-pbr
-BuildRequires:    python3-setuptools
-BuildRequires:    python3-tools
-
-Requires:         python3-cliff >= 2.10
-Requires:         python3-osc-lib >= 1.8.0
-Requires:         python3-keystoneauth1 >= 2.0.0
-Requires:         python3-six >= 1.10.0
-Requires:         python3-futurist
-Requires:         python3-ujson
-Requires:         python3-pbr
-Requires:         python3-monotonic
-Requires:         python3-iso8601
-Requires:         python3-dateutil
-Requires:         python3-debtcollector
-
-%description -n python3-%{pypi_name}
-%{common_desc}
-
-%package -n python3-%{pypi_name}-tests
-Summary:          Python API and CLI for OpenStack Gnocchi Tests
-Requires:         python3-%{pypi_name} = %{version}-%{release}
-
-%description -n python3-%{pypi_name}-tests
-%{common_desc}
-
 %endif
 
-%description
+%package -n python%{pyver}-%{pypi_name}-tests
+Summary:          Python API and CLI for OpenStack Gnocchi Tests
+Requires:         python%{pyver}-%{pypi_name} = %{version}-%{release}
+
+%description -n python%{pyver}-%{pypi_name}-tests
 %{common_desc}
 
 
 %prep
-%autosetup -p1 -n %{pypi_name}-%{upstream_version}
+%autosetup -n %{pypi_name}-%{upstream_version}
 
-%if 0%{?with_python3}
-rm -rf %{py3dir}
-cp -a . %{py3dir}
-2to3 --write --nobackups %{py3dir}
+%if %{pyver} == 3
+2to3 --write --nobackups .
 %endif
 
 # Remove bundled egg-info
@@ -145,85 +112,46 @@ rm -f {,test-}requirements.txt
 
 %build
 export PBR_VERSION=%{version}
-%py2_build
-%py2_build_wheel
-%if 0%{?with_python3}
-pushd %{py3dir}
-LANG=en_US.UTF-8 %{__python3} setup.py build
-popd
-%endif
+%{pyver_build}
+%{pyver_build_wheel}
 
+%if 0%{?with_doc}
+# Some env variables required to successfully build our doc
+export PYTHONPATH=.
+export LANG=en_US.utf8
+%{pyver_bin} setup.py build_sphinx -b html
+
+# Fix hidden-file-or-dir warnings
+rm -rf doc/build/html/.doctrees doc/build/html/.buildinfo
+%endif
 
 %install
 export PBR_VERSION=%{version}
-%if 0%{?with_python3}
-pushd %{py3dir}
-LANG=en_US.UTF-8 %{__python3} setup.py install --skip-build --root %{buildroot}
-mv %{buildroot}%{_bindir}/gnocchi %{buildroot}%{_bindir}/python3-gnocchi
-popd
-%endif
+%{pyver_install}
 
-%{__python2} setup.py install --skip-build --root %{buildroot}
+# Create a versioned binary for backwards compatibility until everything is pure py3
+ln -s gnocchi %{buildroot}%{_bindir}/gnocchi-%{pyver}
 
 mkdir -p $RPM_BUILD_ROOT/wheels
 install -m 644 dist/*.whl $RPM_BUILD_ROOT/wheels/
 
-
-# rename binaries, make compat symlinks
-install -m 755 -d %{buildroot}/%{_bindir}
-pushd %{buildroot}%{_bindir}
-for i in gnocchi-{2,%{?python2_shortver}}; do
-    ln -s gnocchi $i
-done
-%if 0%{?with_python3}
-for i in gnocchi-{3,%{?python3_shortver}}; do
-    ln -s  python3-gnocchi $i
-done
-%endif
-popd
-
-# Some env variables required to successfully build our doc
-export PYTHONPATH=.
-export LANG=en_US.utf8
-python setup.py build_sphinx -b html
-
-# Fix hidden-file-or-dir warnings
-rm -rf doc/build/html/.doctrees doc/build/html/.buildinfo
-
-
-%files -n python2-%{pypi_name}
+%files -n python%{pyver}-%{pypi_name}
 %doc README.rst
 %license LICENSE
 %{_bindir}/gnocchi
-%{_bindir}/gnocchi-2*
-%{python2_sitelib}/gnocchiclient
-%{python2_sitelib}/*.egg-info
-%exclude %{python2_sitelib}/gnocchiclient/tests
+%{_bindir}/gnocchi-%{pyver}
+%{pyver_sitelib}/gnocchiclient
+%{pyver_sitelib}/*.egg-info
+%exclude %{pyver_sitelib}/gnocchiclient/tests
 
-%files -n python2-%{pypi_name}-tests
+%files -n python%{pyver}-%{pypi_name}-tests
 %license LICENSE
-%{python2_sitelib}/gnocchiclient/tests
+%{pyver_sitelib}/gnocchiclient/tests
 
-
-%if 0%{?with_python3}
-%files -n python3-%{pypi_name}
-%doc README.rst
-%license LICENSE
-%{_bindir}/python3-gnocchi
-%{_bindir}/gnocchi-3*
-%{python3_sitelib}/gnocchiclient
-%{python3_sitelib}/*.egg-info
-%exclude %{python3_sitelib}/gnocchiclient/tests
-
-%files -n python3-%{pypi_name}-tests
-%license LICENSE
-%{python3_sitelib}/gnocchiclient/tests
-
-%endif
-
+%if 0%{?with_doc}
 %files -n python-%{pypi_name}-doc
 %doc doc/build/html
-
+%endif
 
 %package wheels
 Summary: %{name} wheels
@@ -234,8 +162,7 @@ Contains python wheels for %{name}
 %files wheels
 /wheels/*
 
-
 %changelog
-* Thu Aug 09 2018 RDO <dev@lists.rdoproject.org> 7.0.4-1
+* Thu Sep 19 2019 RDO <dev@lists.rdoproject.org> 7.0.4-1
 - Update to 7.0.4
 
