@@ -1,9 +1,20 @@
+# Macros for py2/py3 compatibility
+%if 0%{?fedora} || 0%{?rhel} > 7
+%global pyver %{python3_pkgversion}
+%else
+%global pyver 2
+%endif
+%global pyver_bin python%{pyver}
+%global pyver_sitelib %{expand:%{python%{pyver}_sitelib}}
+%global pyver_install %{expand:%{py%{pyver}_install}}
+%global pyver_build %{expand:%{py%{pyver}_build}}
+%global pyver_build_wheel %{expand:%{py%{pyver}_build_wheel}}
+# End of macros for py2/py3 compatibility
 %{!?upstream_version: %global upstream_version %{version}%{?milestone}}
 
+%global with_doc 1
+
 %global sname barbicanclient
-%if 0%{?fedora}
-%global with_python3 1
-%endif
 
 %global common_desc \
 This is a client for the Barbican Key Management API. There is a \
@@ -21,77 +32,47 @@ Source0:        https://tarballs.openstack.org/%{name}/%{name}-%{upstream_versio
 
 BuildArch:      noarch
 
-
+BuildRequires:  git
 %description
 %{common_desc}
 
-
-%package -n python2-%{sname}
+%package -n python%{pyver}-%{sname}
 Summary:        Client Library for OpenStack Barbican Key Management API
-
-BuildRequires:  python2-devel
-BuildRequires:  python2-pbr
-BuildRequires:  python2-pip
-BuildRequires:  python2-wheel
-BuildRequires:  python2-setuptools
-BuildRequires:  git
-
-Requires:       python2-requests
-Requires:       python2-six >= 1.10.0
-Requires:       python2-oslo-i18n >= 3.15.3
-Requires:       python2-oslo-serialization >= 2.18.0
-Requires:       python2-oslo-utils >= 3.33.0
-Requires:       python2-prettytable
-Requires:       python2-keystoneauth1 >= 3.4.0
-Requires:       python2-pbr >= 2.0.0
-%if 0%{?fedora} > 0
-Requires:       python2-cliff
-%else
-Requires:       python-cliff
+%{?python_provide:%python_provide python%{pyver}-%{sname}}
+%if %{pyver} == 3
+Obsoletes: python2-%{sname} < %{version}-%{release}
 %endif
 
-%{?python_provide:%python_provide python2-%{sname}}
+BuildRequires:  python%{pyver}-devel
+BuildRequires:  python%{pyver}-pbr
+BuildRequires:  python%{pyver}-setuptools
+BuildRequires:  python%{pyver}-wheel
+Requires:       python%{pyver}-requests
+Requires:       python%{pyver}-six >= 1.10.0
+Requires:       python%{pyver}-oslo-i18n >= 3.15.3
+Requires:       python%{pyver}-oslo-serialization >= 2.18.0
+Requires:       python%{pyver}-oslo-utils >= 3.33.0
+Requires:       python%{pyver}-prettytable
+Requires:       python%{pyver}-keystoneauth1 >= 3.4.0
+Requires:       python%{pyver}-pbr >= 2.0.0
+Requires:       python%{pyver}-cliff
 
-%description -n python2-%{sname}
+%description -n python%{pyver}-%{sname}
 %{common_desc}
 
-
-%if 0%{?with_python3}
-%package -n python3-%{sname}
-Summary:        Client Library for OpenStack Barbican Key Management API
-
-BuildRequires:  python3-devel
-BuildRequires:  python3-pbr
-BuildRequires:  python3-setuptools
-
-Requires:       python3-requests
-Requires:       python3-six >= 1.10.0
-Requires:       python3-cliff
-Requires:       python3-oslo-i18n >= 3.15.3
-Requires:       python3-oslo-serialization >= 2.18.0
-Requires:       python3-oslo-utils >= 3.33.0
-Requires:       python3-prettytable
-Requires:       python3-keystoneauth1 >= 3.4.0
-Requires:       python3-pbr >= 2.0.0
-
-%{?python_provide:%python_provide python3-%{sname}}
-
-%description -n python3-%{sname}
-%{common_desc}
-%endif
-
-
-%package doc
+%if 0%{?with_doc}
+%package -n python-%{sname}-doc
 Summary: Documentation for OpenStack Barbican API client
 
-BuildRequires:  python2-sphinx
-BuildRequires:  python2-openstackdocstheme
-BuildRequires:  python2-oslo-utils
-BuildRequires:  python2-oslo-i18n
-BuildRequires:  python2-prettytable
+BuildRequires:  python%{pyver}-sphinx
+BuildRequires:  python%{pyver}-openstackdocstheme
+BuildRequires:  python%{pyver}-oslo-utils
+BuildRequires:  python%{pyver}-oslo-i18n
+BuildRequires:  python%{pyver}-prettytable
 
-%description doc
+%description -n python-%{sname}-doc
 Documentation for the barbicanclient module
+%endif
 
 %prep
 %autosetup -n %{name}-%{upstream_version} -S git
@@ -102,56 +83,36 @@ rm -rf {test-,}requirements.txt
 
 %build
 export PBR_VERSION=%{version}
-%py2_build
-%py2_build_wheel
-%if 0%{?with_python3}
-%py3_build
-%endif
+%{pyver_build}
+%{pyver_build_wheel}
 
+%if 0%{?with_doc}
 # doc
-%{__python2} setup.py build_sphinx -b html
+%{pyver_bin} setup.py build_sphinx -b html
 # Fix hidden-file-or-dir warnings
 rm -fr doc/build/html/.buildinfo
+%endif
 
 %install
 export PBR_VERSION=%{version}
-%if 0%{?with_python3}
-%py3_install
-mv %{buildroot}%{_bindir}/barbican %{buildroot}%{_bindir}/barbican-%{python3_version}
-ln -s ./barbican-%{python3_version} %{buildroot}%{_bindir}/barbican-3
-%endif
-
-%py2_install
-mv %{buildroot}%{_bindir}/barbican %{buildroot}%{_bindir}/barbican-%{python2_version}
-ln -s ./barbican-%{python2_version} %{buildroot}%{_bindir}/barbican-2
-ln -s ./barbican-2 %{buildroot}%{_bindir}/barbican
-
-# STX: stage wheels
+%{pyver_install}
+ln -s ./barbican %{buildroot}%{_bindir}/barbican-%{pyver}
 mkdir -p $RPM_BUILD_ROOT/wheels
 install -m 644 dist/*.whl $RPM_BUILD_ROOT/wheels/
 
-
-%files -n python2-%{sname}
+%files -n python%{pyver}-%{sname}
 %license LICENSE
 %doc AUTHORS CONTRIBUTING.rst README.rst ChangeLog
 %{_bindir}/barbican
-%{_bindir}/barbican-2*
-%{python2_sitelib}/barbicanclient
-%{python2_sitelib}/python_barbicanclient-%{upstream_version}-py?.?.egg-info
+%{_bindir}/barbican-%{pyver}
+%{pyver_sitelib}/barbicanclient
+%{pyver_sitelib}/python_barbicanclient-%{upstream_version}-py?.?.egg-info
 
-%if 0%{?with_python3}
-%files -n python3-%{sname}
-%license LICENSE
-%doc AUTHORS CONTRIBUTING.rst README.rst ChangeLog
-%{_bindir}/barbican-3*
-%{python3_sitelib}/barbicanclient
-%{python3_sitelib}/python_barbicanclient-%{upstream_version}-py?.?.egg-info
-%endif
-
-%files doc
+%if 0%{?with_doc}
+%files -n python-%{sname}-doc
 %doc doc/build/html
 %license LICENSE
-
+%endif
 
 %package wheels
 Summary: %{name} wheels
@@ -163,9 +124,9 @@ Contains python wheels for %{name}
 /wheels/*
 
 %changelog
-* Tue Nov 27 2018 RDO <dev@lists.rdoproject.org> 4.7.1-1
-- Update to 4.7.1
+* Wed Oct 02 2019 Joel Capitao <jcapitao@redhat.com> 4.9.0-2
+- Removed python2 subpackages in no el7 distros
 
-* Wed Aug 08 2018 RDO <dev@lists.rdoproject.org> 4.7.0-1
-- Update to 4.7.0
+* Thu Sep 19 2019 RDO <dev@lists.rdoproject.org> 4.9.0-1
+- Update to 4.9.0
 
