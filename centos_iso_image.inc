@@ -15,46 +15,46 @@
 #ceph-manager
 
 # openstack clients
-#python2-aodhclient
-#python2-cinderclient
-#python2-glanceclient
-#python2-gnocchiclient
-#python2-heatclient
-#python2-ironicclient
-#python2-keystoneclient
-#python2-neutronclient
-#python2-novaclient
-#python2-openstackclient
-#python2-pankoclient
-#python2-swiftclient
+python3-aodhclient
+python3-cinderclient
+python3-glanceclient
+python3-gnocchiclient
+python3-heatclient
+python3-ironicclient
+python3-keystoneclient
+python3-neutronclient
+python3-novaclient
+python3-openstackclient
+python3-pankoclient
+python3-swiftclient
 
 # openstack-ras
-#openstack-ras
+openstack-ras
 
 # python-django-horizon
-#python-django-horizon
-#openstack-dashboard
+python3-django-horizon
+openstack-dashboard
 
 # stx-dashboard
-#starlingx-dashboard
+starlingx-dashboard
 
 # openstack-keystone
-#openstack-keystone
+openstack-keystone
 
 # rabbitmq-server
-#rabbitmq-server
+rabbitmq-server
 
 # python-wsme
 python3-wsme
 
 
 # openstack-barbican
-#openstack-barbican
-#openstack-barbican-api
-#openstack-barbican-common
-#openstack-barbican-keystone-listener
-#openstack-barbican-worker
-#puppet-barbican
-#python2-barbican
-#python2-barbicanclient
-#python2-ldap3
+openstack-barbican
+openstack-barbican-api
+openstack-barbican-common
+openstack-barbican-keystone-listener
+openstack-barbican-worker
+puppet-barbican
+python3-barbican
+python3-barbicanclient
+python3-ldap3
