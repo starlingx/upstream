@@ -407,7 +407,6 @@ cd openstack_dashboard && django-admin compilemessages && cd ..
 #ls */locale/*/LC_MESSAGES/django*mo >> horizon.egg-info/SOURCES.txt
 export PBR_VERSION=%{version}
 %{pyver_build}
-%{pyver_build_wheel}
 
 # compress css, js etc.
 cp openstack_dashboard/local/local_settings.py.example openstack_dashboard/local/local_settings.py
@@ -427,6 +426,8 @@ rm -fr html/.doctrees html/.buildinfo
 
 # undo hack
 cp openstack_dashboard/local/local_settings.py.example openstack_dashboard/local/local_settings.py
+
+%{pyver_build_wheel}
 
 %install
 %{pyver_install}
