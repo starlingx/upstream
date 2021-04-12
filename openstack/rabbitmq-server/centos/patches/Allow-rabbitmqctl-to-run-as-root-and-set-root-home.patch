@@ -1,26 +1,42 @@
-From cc25d3100a677e0c69a11975fd30ce72937ad575 Mon Sep 17 00:00:00 2001
+From 79d7868fbff92dcd5b22a32d6942ad2783558d7c Mon Sep 17 00:00:00 2001
 From: Scott Little <scott.little@windriver.com>
 Date: Tue, 24 Jan 2017 12:16:38 -0500
-Subject: [PATCH 2/2]: Allow rabbitmqctl to run as root and set root home
+Subject: [PATCH] Allow rabbitmqctl to run as root and set root home
 
+Signed-off-by: Angie Wang <angie.wang@windriver.com>
 ---
- scripts/rabbitmq-script-wrapper | 3 ++-
- 1 file changed, 2 insertions(+), 1 deletion(-)
+ scripts/rabbitmq-script-wrapper | 7 ++++---
+ 1 file changed, 4 insertions(+), 3 deletions(-)
 
 diff --git a/scripts/rabbitmq-script-wrapper b/scripts/rabbitmq-script-wrapper
-index 4acba9d..fe082e4 100644
+index 4acba9d..6e60b61 100644
 --- a/scripts/rabbitmq-script-wrapper
 +++ b/scripts/rabbitmq-script-wrapper
-@@ -107,7 +107,8 @@ exec_script_as_root() {
+@@ -91,6 +91,7 @@ exec_script_as_rabbitmq() {
+ }
+ 
+ exec_script_as_root() {
++  export HOME=${HOME:-/root}
+   if [ -x /sbin/runuser ]
+   then
+     # TODO:
+@@ -101,13 +102,13 @@ exec_script_as_root() {
+     # removed
+     if /sbin/runuser --version | grep -qF util-linux
+     then
+-        exec /sbin/runuser -u rabbitmq -- "/usr/lib/rabbitmq/bin/$SCRIPT" "$@"
++        exec /sbin/runuser -u root -- "/usr/lib/rabbitmq/bin/$SCRIPT" "$@"
+     else
+-        exec /sbin/runuser -s /bin/sh -- rabbitmq "/usr/lib/rabbitmq/bin/$SCRIPT" "$@"
++        exec /sbin/runuser -s /bin/sh -- root "/usr/lib/rabbitmq/bin/$SCRIPT" "$@"
      fi
    elif [ -x /bin/su ]
    then
 -    exec /bin/su -s /bin/sh rabbitmq -- "/usr/lib/rabbitmq/bin/$SCRIPT" "$@"
-+    export HOME=${HOME:-/root}
 +    exec /bin/sh -- "/usr/lib/rabbitmq/bin/$SCRIPT" "$@"
    else
      echo "Please ensure /bin/su or /sbin/runuser exists and can be executed by $USER." 1>&2
      exit 1
 -- 
-2.7.4
+1.8.3.1
 
