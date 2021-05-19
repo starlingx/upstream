@@ -4,3 +4,5 @@ PROJECT=barbican
 PROJECT_REPO=https://opendev.org/openstack/barbican.git
 PIP_PACKAGES="pycrypto"
 PROFILES="fluent"
+PYTHON3=yes
+
