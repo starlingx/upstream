@@ -60,9 +60,9 @@ start()
     mkdir -p ${TMPUPLOADDIR}
 
     echo -n "Starting $DESC..."
-    
+
     start-stop-daemon --start --quiet --background --pidfile ${PIDFILE} \
-        --make-pidfile --exec ${PYTHON} -- ${EXEC} --bind ${BIND}:${PORT} \
+        --make-pidfile --exec ${PYTHON} -- ${EXEC} --preload --bind ${BIND}:${PORT} \
         --worker-class ${WORKER} --workers ${WORKERS} --timeout ${TIMEOUT} \
         --log-syslog  \
         --config '/usr/share/openstack-dashboard/guni_config.py' \
