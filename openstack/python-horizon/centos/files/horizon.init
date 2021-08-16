@@ -25,7 +25,7 @@ WORKER="eventlet"
 WORKERS=`grep workers /etc/openstack-dashboard/horizon-config.ini | cut -f3 -d' '`
 # Increased timeout to facilitate large image uploads
 TIMEOUT="200"
-STATICDIR="/www/pages/static"
+STATICDIR="/var/www/pages/static"
 BRANDDIR="/opt/branding"
 APPLIEDDIR="/opt/branding/applied"
 TMPUPLOADDIR="/scratch/horizon"
