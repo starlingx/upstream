@@ -1,0 +1,7 @@
+---
+debname: horizon
+debver: 18.6.2-5
+dl_hook: dl_hook
+revision:
+  dist: $STX_DIST
+  PKG_GITREVCOUNT: true
