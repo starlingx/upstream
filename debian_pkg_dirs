@@ -1,1 +1,4 @@
 openstack/rabbitmq-server
+openstack/python-keystoneclient
+openstack/python-glanceclient
+openstack/python-novaclient
