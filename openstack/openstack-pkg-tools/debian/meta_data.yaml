@@ -1,0 +1,10 @@
+---
+debname: openstack-pkg-tools
+debver: 117
+dl_path:
+  name: openstack-pkg-tools-debian-117.tar.gz
+  url: https://salsa.debian.org/openstack-team/debian/openstack-pkg-tools/-/archive/debian/117/openstack-pkg-tools-debian-117.tar.gz
+  md5sum: 6c26ff316b869ca12e09e7f3e77c150e
+revision:
+  dist: $STX_DIST
+  PKG_GITREVCOUNT: true
