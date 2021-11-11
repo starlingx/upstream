@@ -1,0 +1,10 @@
+---
+debname: python-osc-lib
+debver: 2.2.1-2
+dl_path:
+  name: python-osc-lib-2.2.1-2.tar.gz
+  url: https://salsa.debian.org/openstack-team/libs/python-osc-lib/-/archive/debian/2.2.1-2/python-osc-lib-debian-2.2.1-2.tar.gz
+  md5sum: b72d416dd21b369d89c1dc3f8de42705
+revision:
+  dist: $STX_DIST
+  PKG_GITREVCOUNT: true
