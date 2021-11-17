@@ -31,6 +31,7 @@ Source14:   horizon-assets-compress
 
 # Patches
 Patch1:   0001-Remove-the-hard-coded-internal-URL-for-keystone.patch
+Patch2:   0002-Use-policy_rules-for-user-role-assignment-and-group-tabs.patch
 
 #
 # BuildArch needs to be located below patches in the spec file. Don't ask!
