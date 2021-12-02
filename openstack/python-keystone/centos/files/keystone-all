@@ -1,5 +1,5 @@
 #!/bin/sh
-# Copyright (c) 2013-2018 Wind River Systems, Inc.
+# Copyright (c) 2013-2021 Wind River Systems, Inc.
 #
 # SPDX-License-Identifier: Apache-2.0
 #
@@ -41,16 +41,7 @@ WORKER="eventlet"
 # Increased timeout to facilitate large image uploads
 TIMEOUT="200"
 
-# Calculate the no of workers based on the number of workers retrieved by
-# Platform Eng which is retreived from the keystone-extra.conf
-
-if [ "$system_type" == "All-in-one" ]; then
-    TIS_WORKERS_FACTOR=1
-else
-    TIS_WORKERS_FACTOR=1.5
-fi
-TIS_WORKERS=$(echo "${TIS_WORKERS_FACTOR}*${TIS_PUBLIC_WORKERS}"|bc )
-TIS_WORKERS=${TIS_WORKERS%.*}
+TIS_WORKERS=${TIS_PUBLIC_WORKERS%.*}
 
 #--max-requests , --max-requests-jitter Configuration
 #--max-requests = The max number of requests a worker will process before restarting
