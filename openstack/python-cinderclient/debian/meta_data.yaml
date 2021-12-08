@@ -1,7 +1,7 @@
 ---
 debname: python-cinderclient
 debver: 1:7.2.0-3
-dl_name:
+dl_path:
     name: python-cinderclient-debian-7.2.0-3.tar.gz
     url: https://salsa.debian.org/openstack-team/clients/python-cinderclient/-/archive/debian/7.2.0-3/python-cinderclient-debian-7.2.0-3.tar.gz
     md5sum: b2fae10096bc2cf30935afe409ed9b4c
