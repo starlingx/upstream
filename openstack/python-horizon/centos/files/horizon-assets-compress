@@ -7,7 +7,7 @@
 
 PYTHON=`which python`
 MANAGE="/usr/share/openstack-dashboard/manage.py"
-STATICDIR="/www/pages/static"
+STATICDIR="/var/www/pages/static"
 BRANDDIR="/opt/branding"
 APPLIEDDIR="/opt/branding/applied"
 
