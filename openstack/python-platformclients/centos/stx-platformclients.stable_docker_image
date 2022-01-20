@@ -2,10 +2,10 @@ BUILDER=loci
 LABEL=stx-platformclients
 PROJECT=infra
 PROJECT_REPO=nil
-DIST_PACKAGES="python-devel libffi-devel openssl-devel which bash-completion helm kubernetes-1.21.3-client"
+DIST_PACKAGES="python-devel libffi-devel openssl-devel which bash-completion helm kubernetes-1.21.8-client"
 PIP_PACKAGES="pycrypto httplib2 pylint pyopenssl ndg-httpsclient pyasn1 \
     six prettytable PyYAML python-keystoneclient  python-barbicanclient \
     python-openstackclient cgtsclient fmclient distributedcloud_client \
     osprofiler beautifulsoup4 oidcauthtools mechanize html5lib webencodings \
     nfv-client"
-CUSTOMIZATION="ln -s /usr/local/kubernetes/1.21.3/stage2/usr/bin/kubectl /usr/bin/"
+CUSTOMIZATION="ln -s /usr/local/kubernetes/1.21.8/stage2/usr/bin/kubectl /usr/bin/"
