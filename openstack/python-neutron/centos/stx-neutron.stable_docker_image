@@ -6,4 +6,3 @@ PROJECT_REF=stable/ussuri
 PIP_PACKAGES="networking-sfc pycrypto pylint tinyrpc lxml"
 DIST_PACKAGES="ethtool lshw"
 PROFILES="fluent neutron linuxbridge openvswitch"
-PYTHON3=yes

@@ -5,5 +5,4 @@ PROJECT_REPO=https://opendev.org/openstack/glance.git
 PIP_PACKAGES="pycrypto python-swiftclient psutil pylint"
 DIST_PACKAGES="postgresql-libs"
 PROFILES="fluent glance ceph"
-PYTHON3=yes
 

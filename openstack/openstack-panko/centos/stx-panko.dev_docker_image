@@ -8,5 +8,4 @@ CUSTOMIZATION="\
     sudo cp /opt/rh/httpd24/root/etc/httpd/conf.modules.d/10-rh-python36-wsgi.conf /etc/httpd/conf.modules.d/10-wsgi.conf && \
     sudo cp /opt/rh/httpd24/root/usr/lib64/httpd/modules/mod_rh-python36-wsgi.so /etc/httpd/modules/ \
 "
-PYTHON3=yes
 

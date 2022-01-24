@@ -14,5 +14,4 @@ CUSTOMIZATION="\
     sed -i -e '/query.decode.errors=.replace../s/decode/encode/' /var/lib/openstack/lib/python3.6/site-packages/django/db/backends/mysql/operations.py && \
     sed -i 's/Listen 80/#Listen 80/' /etc/httpd/conf/httpd.conf \
 "
-PYTHON3=yes
 

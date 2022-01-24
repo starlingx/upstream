@@ -7,5 +7,4 @@ PIP_PACKAGES="pycrypto httplib2 pylint pyopenssl ndg-httpsclient pyasn1 \
     python-keystoneclient python-neutronclient python-novaclient python-barbicanclient \
     python-swiftclient python-openstackclient"
 DIST_PACKAGES="python-devel libffi-devel openssl-devel which bash-completion"
-PYTHON3=yes
 
