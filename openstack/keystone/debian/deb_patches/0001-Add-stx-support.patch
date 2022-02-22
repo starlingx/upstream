@@ -1,32 +1,25 @@
-From ac62af6bc51c77afbc62d6166feca3187cde6d59 Mon Sep 17 00:00:00 2001
-From: Charles Short <chucks@redhat.com>
-Date: Tue, 23 Nov 2021 13:52:31 +0000
+From 129e40a0c304cc76d4841188a7700f3e5d049322 Mon Sep 17 00:00:00 2001
+From: Charles Short <charles.short@windriver.com>
+Date: Tue, 15 Feb 2022 15:59:20 +0000
 Subject: [PATCH] Add stx support
 
 Apply Centos 7 patches to the debian packaging.
 
-Signed-off-by: Charles Short <chucks@redhat.com>
+Signed-off-by: Charles Short <charles.short@windriver.com>
 ---
- debian/control                                |   3 +-
+ debian/control                                |   2 +
  debian/keystone.dirs                          |   1 +
  debian/keystone.install                       |   4 +
  debian/keystone.logrotate                     |   8 -
- debian/keystone.postinst                      |  40 ++++
- debian/keystone.postinst.in                   | 220 ------------------
- debian/keystone.postrm                        |  19 +-
- debian/keystone.prerm                         |  15 --
- debian/python3-keystone.install               |   1 +
- debian/rules                                  |  10 +-
- debian/stx/keystone-all                       | 156 +++++++++++++
- debian/stx/keystone-fernet-keys-rotate-active |  64 +++++
+ debian/keystone.postinst.in                   |  10 +-
+ debian/rules                                  |   6 +
+ debian/stx/keystone-all                       | 156 ++++++++++++++++++
+ debian/stx/keystone-fernet-keys-rotate-active |  64 +++++++
  debian/stx/keystone.service                   |  14 ++
- debian/stx/password-rules.conf                |  34 +++
- debian/stx/public.py                          |  21 ++
- 15 files changed, 343 insertions(+), 267 deletions(-)
+ debian/stx/password-rules.conf                |  34 ++++
+ debian/stx/public.py                          |  21 +++
+ 11 files changed, 303 insertions(+), 17 deletions(-)
  delete mode 100644 debian/keystone.logrotate
- create mode 100755 debian/keystone.postinst
- delete mode 100755 debian/keystone.postinst.in
- delete mode 100755 debian/keystone.prerm
  create mode 100644 debian/stx/keystone-all
  create mode 100644 debian/stx/keystone-fernet-keys-rotate-active
  create mode 100644 debian/stx/keystone.service
@@ -34,7 +27,7 @@ Signed-off-by: Charles Short <chucks@redhat.com>
  create mode 100644 debian/stx/public.py
 
 diff --git a/debian/control b/debian/control
-index 9d0a3a41f..ced0c4820 100644
+index 9d0a3a41f..9a67234fa 100644
 --- a/debian/control
 +++ b/debian/control
 @@ -31,6 +31,8 @@ Build-Depends-Indep:
@@ -46,14 +39,6 @@ index 9d0a3a41f..ced0c4820 100644
   python3-ldap,
   python3-ldappool,
   python3-lxml (>= 4.5.0),
-@@ -87,7 +89,6 @@ Package: keystone
- Architecture: all
- Depends:
-  adduser,
-- dbconfig-common,
-  debconf,
-  python3-keystone (= ${source:Version}),
-  python3-keystoneclient,
 diff --git a/debian/keystone.dirs b/debian/keystone.dirs
 index a4b3a9e86..6c6e31faf 100644
 --- a/debian/keystone.dirs
@@ -90,230 +75,14 @@ index 2709c72aa..000000000
 -    copytruncate
 -}
 \ No newline at end of file
-diff --git a/debian/keystone.postinst b/debian/keystone.postinst
-new file mode 100755
-index 000000000..59e6c6799
---- /dev/null
-+++ b/debian/keystone.postinst
-@@ -0,0 +1,40 @@
-+#!/bin/sh
-+
-+set -e
-+
-+if [ "$1" = "configure" ]; then
-+    # create the keystone group
-+    if ! getent group keystone > /dev/null 2>&1
-+    then
-+        addgroup --system keystone >/dev/null || true
-+    fi
-+
-+    # create the keystone user to avoid running keystone as root
-+    if ! getent passwd keystone > /dev/null 2>&1
-+    then
-+        adduser --quiet \
-+                --system \
-+                --home /var/lib/keystone \
-+                --no-create-home \
-+                --ingroup keystone \
-+                --shell /bin/false \
-+                keystone || true
-+    fi
-+
-+    if [ "$(id -gn keystone)"  = "nogroup" ]
-+    then
-+        usermod -g keystone keystone
-+    fi
-+
-+    # change the permissions on key directories
-+    chown keystone:adm /var/log/keystone
-+    chmod 0750 /var/log/keystone
-+
-+    find /etc/keystone -exec chown keystone:keystone "{}" +
-+    find /etc/keystone -type f -exec chmod 0640 "{}" + -o -type d -exec chmod 0750 "{}" +
-+
-+    find /var/lib/keystone -exec chown keystone:keystone "{}" +
-+    find /var/lib/keystone -type f -exec chmod 0640 "{}" + -o -type d -exec chmod 0750 "{}" +
-+fi
-+
-+#DEBHELPER#
 diff --git a/debian/keystone.postinst.in b/debian/keystone.postinst.in
-deleted file mode 100755
-index 207cbc22e..000000000
+index 207cbc22e..4aadd2161 100755
 --- a/debian/keystone.postinst.in
-+++ /dev/null
-@@ -1,220 +0,0 @@
--#!/bin/sh
--
--set -e
--
--#PKGOS-INCLUDE#
--
--KEY_CONF=/etc/keystone/keystone.conf
--
--keystone_get_debconf_admin_credentials () {
--	db_get keystone/admin-user
--	ADMIN_USER_NAME=${RET:-admin}
--	db_get keystone/admin-password
--	ADMIN_USER_PW=${RET:-$(gen_password)}
--	db_get keystone/admin-email
--	ADMIN_USER_EMAIL=${RET:-root@localhost}
--	db_get keystone/admin-tenant-name
--	ADMIN_TENANT_NAME=${RET:-admin}
--	db_get keystone/admin-role-name
--	ADMIN_ROLE_NAME=${RET:-admin}
--
--	# We export the retrived credentials for later use
--	export OS_PROJECT_DOMAIN_ID=default
--	export OS_USER_DOMAIN_ID=default
--	export OS_USERNAME=admin
--	export OS_PASSWORD=${ADMIN_USER_PW}
--	export OS_TENANT_NAME=${ADMIN_TENANT_NAME}
--	export OS_PROJECT_NAME=${ADMIN_TENANT_NAME}
--	export OS_AUTH_URL=http://127.0.0.1:5000/v3/
--	export OS_IDENTITY_API_VERSION=3
--	export OS_AUTH_VERSION=3
--	export OS_PROJECT_DOMAIN_ID=default
--	export OS_USER_DOMAIN_ID=default
--	export OS_NO_CACHE=1
--}
--
--keystone_bootstrap_admin () {
--	# This is the new way to bootstrap the admin user of Keystone
--	# and we shouldn't use the admin auth token anymore.
--	export OS_BOOTSTRAP_USERNAME=${ADMIN_USER_NAME}
--	export OS_BOOTSTRAP_PROJECT_NAME=${ADMIN_TENANT_NAME}
--	export OS_BOOTSTRAP_PASSWORD=${ADMIN_USER_PW}
--
--	REG_ENDPOINT_IPV4_REGEX='^[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}$'
--	REG_ENDPOINT_IPV6_REGEX="^\s*((([0-9A-Fa-f]{1,4}:){7}([0-9A-Fa-f]{1,4}|:))|(([0-9A-Fa-f]{1,4}:){6}(:[0-9A-Fa-f]{1,4}|((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3})|:))|(([0-9A-Fa-f]{1,4}:){5}(((:[0-9A-Fa-f]{1,4}){1,2})|:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3})|:))|(([0-9A-Fa-f]{1,4}:){4}(((:[0-9A-Fa-f]{1,4}){1,3})|((:[0-9A-Fa-f]{1,4})?:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:))|(([0-9A-Fa-f]{1,4}:){3}(((:[0-9A-Fa-f]{1,4}){1,4})|((:[0-9A-Fa-f]{1,4}){0,2}:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:))|(([0-9A-Fa-f]{1,4}:){2}(((:[0-9A-Fa-f]{1,4}){1,5})|((:[0-9A-Fa-f]{1,4}){0,3}:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:))|(([0-9A-Fa-f]{1,4}:){1}(((:[0-9A-Fa-f]{1,4}){1,6})|((:[0-9A-Fa-f]{1,4}){0,4}:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:))|(:(((:[0-9A-Fa-f]{1,4}){1,7})|((:[0-9A-Fa-f]{1,4}){0,5}:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:)))(%.+)?\s*$"
--	REG_ENDPOINT_FQDN_REGEX='^((([a-z0-9]([-a-z0-9]*[a-z0-9])?)|(#[0-9]+)|(\[((([01]?[0-9]{0,2})|(2(([0-4][0-9])|(5[0-5]))))\.){3}(([01]?[0-9]{0,2})|(2(([0-4][0-9])|(5[0-5]))))\]))\.)*(([a-z]([-a-z0-9]*[a-z0-9])?)|(#[0-9]+)|(\[((([01]?[0-9]{0,2})|(2(([0-4][0-9])|(5[0-5]))))\.){3}(([01]?[0-9]{0,2})|(2(([0-4][0-9])|(5[0-5]))))\]))$'
--	REG_ENDPOINT_REGION_REGEX="^([_a-zA-Z0-9]+)([_.a-zA-Z0-9-]*)([_.a-zA-Z0-9]+)\$"
--
--
--	db_get keystone/register-endpoint
--	if [ "$RET" = "true" ] ; then
--		do_REGISTER_THE_KS_ENDPOINT=yes
--		db_get keystone/region-name
--		my_REGION_NAME=${RET}
--		REGION_NAME=${RET}
--
--		db_get keystone/endpoint-ip
--		# Validate that the choosen endpoint is an IPv4, IPv6 or FQDN
--		KEYSTONE_ENDPOINT_IP=`echo "${RET}" | egrep ${REG_ENDPOINT_IPV4_REGEX}` || true
--		if [ -z "${KEYSTONE_ENDPOINT_IP}" ] ; then
--			KEYSTONE_ENDPOINT_IP=`echo "${RET}" | egrep ${REG_ENDPOINT_IPV6_REGEX}` || true
--			if [ -z ${KEYSTONE_ENDPOINT_IP} ] ; then
--				KEYSTONE_ENDPOINT_IP=`echo ${RET} | egrep ${REG_ENDPOINT_FQDN_REGEX}` || true
--				if [ -z ${KEYSTONE_ENDPOINT_IP} ] ; then
--					echo "Keystone's address could not be validated: will not register endpoint."
--					do_REGISTER_THE_KS_ENDPOINT=no
--				fi
--			fi
--		fi
--
--		# Validate that the region name has only chars, dashes and dots
--		my_REGION_NAME=`echo "${REGION_NAME}" | egrep ${REG_ENDPOINT_REGION_REGEX}` || true
--		if [ -z "${my_REGION_NAME}" ] ; then
--			echo "This region could not be validated: will not register endpoint."
--			do_REGISTER_THE_KS_ENDPOINT=no
--		fi
--
--		if [ "${do_REGISTER_THE_KS_ENDPOINT}" = "yes" ] ; then
--			db_get keystone/endpoint-proto
--			PROTO=${RET}
--			BOOTSTRAP_ADDED_PARAMS="--bootstrap-region-id ${REGION_NAME} --bootstrap-admin-url ${PROTO}://${KEYSTONE_ENDPOINT_IP}:5000 --bootstrap-public-url ${PROTO}://${KEYSTONE_ENDPOINT_IP}:5000 --bootstrap-internal-url ${PROTO}://${KEYSTONE_ENDPOINT_IP}:5000"
--		else
--			BOOTSTRAP_ADDED_PARAMS=""
--		fi
--	else
--		BOOTSTRAP_ADDED_PARAMS=""
--	fi
--	echo "Now doing: su keystone -s /bin/sh -c 'keystone-manage bootstrap --bootstrap-role-name admin --bootstrap-service-name keystone ${BOOTSTRAP_ADDED_PARAMS}'"
--	su keystone -s /bin/sh -c "keystone-manage bootstrap --bootstrap-role-name admin --bootstrap-service-name keystone ${BOOTSTRAP_ADDED_PARAMS}"
--}
--
--keystone_create_admin_tenant () {
--	echo -n "Fixing-up: admin-project-desc "
--	openstack project set --description "Default Debian admin project" $ADMIN_TENANT_NAME
--	echo -n "service-project "
--	openstack project create --or-show service --description "Default Debian service project" >/dev/null
--	echo -n "default-admin-email "
--	openstack user set --description "Default Debian admin user" --email ${ADMIN_USER_EMAIL} --enable $ADMIN_USER_NAME
--	echo "...done!"
--
--	# Note: heat_stack_owner, heat_stack_user is needed for heat to work, and Member ResellerAdmin
--	# are needed for swift auto account creation.
--	echo -n "Adding roles: "
--	for i in KeystoneAdmin KeystoneServiceAdmin heat_stack_owner \
--		heat_stack_user Member ResellerAdmin rating service \
--		owner k8s_admin k8s_developer k8s_viewer \
--		load-balancer_admin load-balancer_member; do
--		echo -n "${i} "
--		openstack role create --or-show ${i} >/dev/null
--	        # Note: If heat_stack_user role is adding, don't assing it to admin user.
--		# This role is automatically assigned by Heat to the users it creates.
--	        # This role is restricted from all API access, and it never should be assigned to any user explicitly.
--		if [ "${i}" != "heat_stack_user" ]; then
--			openstack role add --project $ADMIN_TENANT_NAME --user $ADMIN_USER_NAME ${i} >/dev/null
--		fi
--	done
--	echo "...done!"
--}
--
--if [ "$1" = "configure" ] ; then
--	. /usr/share/debconf/confmodule
--	. /usr/share/dbconfig-common/dpkg/postinst
--
--	# Create user and group keystone, plus /var/log and /var/lib owned by it
--	# We need a bash shell so that keystone-manage pkg_setup works, and the
--	# Wheezy package doesn't have it, failing upgrades
--	pkgos_var_user_group keystone /bin/sh
--	# Make sure we have a folder to create certs, that isn't world readable
--	mkdir -p /etc/keystone/ssl/certs
--	chown keystone:keystone /etc/keystone/ssl/certs
--	chmod 750 /etc/keystone/ssl/certs
--	chown keystone:keystone /etc/keystone/ssl
--	chmod 750 /etc/keystone/ssl
--
--	# Create keystone.conf if it's not there
--	pkgos_write_new_conf keystone keystone.conf
--
--	# The on-disk policy file is currently broken for Keystone.
--	# The admin bootstraping will not work anymore, due to enforcing of system-scope:all.
--	rm -f /etc/keystone/policy.json
--#	pkgos_write_new_conf keystone policy.json
--#	if ! [ -e /etc/keystone/policy.json ] ; then
--#		touch /etc/keystone/policy.json
--#		chown 0640 /etc/keystone/policy.json
--#		chown root:keystone /etc/keystone/policy.json
--#	fi
--
--	OSTACKCLI_PARAMS="--os-url=http://127.0.0.1:5000/v3/ --os-domain-name default --os-identity-api-version=3"
--
--	# Make sure /var/log/keystone/keystone.log is owned by keystone
--	# BEFORE any keystone-manage calls.
--	chown -R keystone:keystone /var/log/keystone
--
--	# Upgrade or create the db if directed to do so
--	db_get keystone/configure_db
--	if [ "$RET" = "true" ] ; then
--		# Configure the SQL connection of keystone.conf according to dbconfig-common
--		pkgos_dbc_postinst ${KEY_CONF} database connection keystone $@
--		echo "Running: su keystone -s /bin/sh -c 'keystone-manage db_sync'..."
--		su keystone -s /bin/sh -c "keystone-manage db_sync"
--	fi
--
--	db_get keystone/create-admin-tenant
--	if [ "$RET" = "true" ] ; then
--		mkdir -p /etc/keystone/fernet-keys
--		chown keystone:keystone /etc/keystone/fernet-keys
--		chmod 700 /etc/keystone/fernet-keys
--		echo "Running: su keystone -s /bin/sh -c 'keystone-manage fernet_setup --keystone-user keystone --keystone-group keystone'..."
--		su keystone -s /bin/sh -c 'keystone-manage fernet_setup --keystone-user keystone --keystone-group keystone'
--		echo "Running: su keystone -s /bin/sh -c 'keystone-manage credential_setup --keystone-user keystone --keystone-group keystone'..."
--		su keystone -s /bin/sh -c 'keystone-manage credential_setup --keystone-user keystone --keystone-group keystone'
--	fi
--
++++ b/debian/keystone.postinst.in
+@@ -170,15 +170,7 @@ if [ "$1" = "configure" ] ; then
+ 		su keystone -s /bin/sh -c 'keystone-manage credential_setup --keystone-user keystone --keystone-group keystone'
+ 	fi
+ 
 -	chown keystone:adm /var/log/keystone
 -
 -	if [ -n $(which systemctl)"" ] ; then
@@ -323,140 +92,27 @@ index 207cbc22e..000000000
 -		update-rc.d keystone defaults
 -	fi
 -	invoke-rc.d keystone start
--
--	db_get keystone/create-admin-tenant
--	if [ "$RET" = "true" ] ; then
--		echo -n "Sleeping 10 seconds to make sure the keystone daemon is up and running: 10..."
--		sleep 1
--		echo -n "9..."
--		sleep 1
--		echo -n "8..."
--		sleep 1
--		echo -n "7..."
--		sleep 1
--		echo -n "6..."
--		sleep 1
--		echo -n "5..."
--		sleep 1
--		echo -n "4..."
--		sleep 1
--		echo -n "3..."
--		sleep 1
--		echo -n "2..."
--		sleep 1
--		echo -n "1..."
--		sleep 1
--		echo "0"
--
--		keystone_get_debconf_admin_credentials
--		echo "===> Bootstraping tenants with 'keystone-manage bootstrap':"
--		keystone_get_debconf_admin_credentials
--		keystone_bootstrap_admin
--		db_unregister keystone/register-endpoint
--		echo "===> Editing bootstraped tenants and adding default roles"
--		keystone_create_admin_tenant
--		echo "done!"
--	fi
--	db_unregister keystone/create-admin-tenant
--	db_stop
--fi
--
--exit 0
-diff --git a/debian/keystone.postrm b/debian/keystone.postrm
-index 230a08730..847076d3f 100755
---- a/debian/keystone.postrm
-+++ b/debian/keystone.postrm
-@@ -2,20 +2,9 @@
++	chown -R keystone:keystone /var/log/keystone
  
- set -e
- 
--if [ "${1}" = "purge" ] ; then
--	if [ -f /usr/share/debconf/confmodule ] && [ -f /usr/share/dbconfig-common/dpkg/postrm ] ; then
--		. /usr/share/debconf/confmodule
--
--		db_get keystone/configure_db
--		if [ "$RET" = "true" ] ; then
--			. /usr/share/dbconfig-common/dpkg/postrm
--			dbc_go keystone $@
--		fi
--	fi
--	rm -rf /var/log/keystone /var/lib/keystone /etc/keystone
--	if [ -x `which a2dissite`"" ] ; then
--		a2dissite wsgi-keystone.conf || true
--	fi
--fi
-+case "$1" in
-+    purge)
-+        rm -rf /var/log/keystone
-+esac
- 
- #DEBHELPER#
-diff --git a/debian/keystone.prerm b/debian/keystone.prerm
-deleted file mode 100755
-index 9f89a1ae0..000000000
---- a/debian/keystone.prerm
-+++ /dev/null
-@@ -1,15 +0,0 @@
--#!/bin/sh
--
--set -e
--
--. /usr/share/debconf/confmodule
--
--db_get keystone/configure_db
--if [ "$RET" = "true" ]; then
--    . /usr/share/dbconfig-common/dpkg/prerm
--    dbc_go keystone $@
--fi
--
--#DEBHELPER#
--
--exit 0
-diff --git a/debian/python3-keystone.install b/debian/python3-keystone.install
-index 44d7fcb64..3c76ffb99 100644
---- a/debian/python3-keystone.install
-+++ b/debian/python3-keystone.install
-@@ -1,2 +1,3 @@
- usr/bin/*
- usr/lib/python3/*
-+debian/stx/public.py usr/share/keystone
+ 	db_get keystone/create-admin-tenant
+ 	if [ "$RET" = "true" ] ; then
 diff --git a/debian/rules b/debian/rules
-index 3744142f9..bb6f72302 100755
+index 3744142f9..f827d1b68 100755
 --- a/debian/rules
 +++ b/debian/rules
-@@ -11,7 +11,7 @@ export KSCTEST_PATH=/usr/lib/python3/dist-packages/keystoneclient
- include /usr/share/openstack-pkg-tools/pkgos.make
+@@ -106,6 +106,12 @@ ifeq (,$(findstring nodocs, $(DEB_BUILD_OPTIONS)))
+ 	dh_installman
+ endif
  
- %:
--	dh $@ --buildsystem=python_distutils --with python3,sphinxdoc,systemd
-+	dh $@ --buildsystem=pybuild --with python3,sphinxdoc,systemd
++override_dh_installsystemd:
++	dh_installsystemd --no-enable --no-start
++
++override_dh_installinit:
++	dh_installinit --no-enable --no-start
++
+ override_dh_python3:
+ 	dh_python3 --shebang=/usr/bin/python3
  
- override_dh_clean:
- 	rm -rf $(CURDIR)/build $(CURDIR)/keystone.egg-info $(CURDIR)/.cache
-@@ -35,10 +35,6 @@ override_dh_clean:
- 	rm -f AUTHORS ChangeLog
- 	dh_clean
- 
--override_dh_auto_build:
--	/usr/share/openstack-pkg-tools/pkgos_insert_include pkgos_func keystone.config
--	/usr/share/openstack-pkg-tools/pkgos_insert_include pkgos_func keystone.postinst
--
- override_dh_auto_clean:
- 	python3 setup.py clean
- 
-@@ -78,11 +74,9 @@ endif
- 		--namespace oslo.db \
- 		--namespace oslo.middleware \
- 		--namespace osprofiler
--	pkgos-fix-config-default $(CURDIR)/debian/keystone/usr/share/keystone/keystone.conf catalog template_file /etc/keystone/default_catalog.templates
--	pkgos-fix-config-default $(CURDIR)/debian/keystone/usr/share/keystone/keystone.conf DEFAULT log_dir /var/log/keystone
--	pkgos-fix-config-default $(CURDIR)/debian/keystone/usr/share/keystone/keystone.conf DEFAULT log_file keystone.log
- 
- 	mkdir -p $(CURDIR)/debian/keystone/etc/keystone/policy.d
-+	mkdir -p $(CURDIR)/debian/keystone/etc/keystone/credential-keys
- 	PYTHONPATH=$(CURDIR)/debian/tmp/usr/lib/python3/dist-packages oslopolicy-sample-generator \
- 		--output-file $(CURDIR)/debian/keystone/etc/keystone/policy.d/00_default_policy.yaml \
- 		--format yaml \
 diff --git a/debian/stx/keystone-all b/debian/stx/keystone-all
 new file mode 100644
 index 000000000..de339caa6
@@ -777,5 +433,5 @@ index 000000000..d3a29f3b3
 +
 +application = wsgi_server.initialize_public_application()
 -- 
-2.30.2
+2.32.0
 
