@@ -1,6 +1,5 @@
 openstack/openstack-aodh
 openstack/openstack-ironic
-openstack/openstack-panko
 openstack/python-barbican
 openstack/python-ceilometer
 openstack/python-cinder
