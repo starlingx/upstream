@@ -12,10 +12,11 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 
+import sys
 
 from keystone.server import wsgi as wsgi_server
 
-import sys
+
 sys.argv = sys.argv[:1]
 
 application = wsgi_server.initialize_public_application()
