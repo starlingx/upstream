@@ -5,15 +5,25 @@
       - stx-release-notes-jobs
     check:
       jobs:
-        - openstack-tox-pep8
-        - openstack-tox-linters
+        - stx-upstream-tox-pep8
+        - stx-upstream-tox-linters
     gate:
       jobs:
-        - openstack-tox-pep8
-        - openstack-tox-linters
+        - stx-upstream-tox-pep8
+        - stx-upstream-tox-linters
     post:
       jobs:
         - stx-upstream-upload-git-mirror
+
+- job:
+    name: stx-upstream-tox-pep8
+    parent: openstack-tox-pep8
+    nodeset: debian-bullseye
+
+- job:
+    name: stx-upstream-tox-linters
+    parent: openstack-tox-linters
+    nodeset: debian-bullseye
 
 - job:
     name: stx-upstream-upload-git-mirror
