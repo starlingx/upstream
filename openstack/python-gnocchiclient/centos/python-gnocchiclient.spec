@@ -14,7 +14,7 @@ This is a client library for Gnocchi built on the Gnocchi API. It \
 provides a Python API (the gnocchiclient module) and a command-line tool.
 
 Name:             python-gnocchiclient
-Version:          7.0.4
+Version:          7.0.7
 Release:          1%{?_tis_dist}.%{tis_patch_ver}
 Summary:          Python API and CLI for OpenStack Gnocchi
 
