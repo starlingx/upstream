@@ -59,6 +59,9 @@ start()
     rm -rf ${TMPUPLOADDIR}
     mkdir -p ${TMPUPLOADDIR}
 
+    # extract branding file before server starts
+    /usr/bin/horizon-assets-compress
+
     echo -n "Starting $DESC..."
 
     start-stop-daemon --start --quiet --background --pidfile ${PIDFILE} \

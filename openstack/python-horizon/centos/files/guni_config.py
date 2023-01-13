@@ -1,5 +1,5 @@
 """
-Copyright (c) 2022 Wind River Systems, Inc.
+Copyright (c) 2022-2023 Wind River Systems, Inc.
 
 SPDX-License-Identifier: Apache-2.0
 
@@ -9,7 +9,6 @@ import datetime
 import fnmatch
 import os
 import resource
-import subprocess
 
 from django.conf import settings
 
@@ -37,10 +36,6 @@ def worker_abort(worker):
                     os.remove(link)
             except OSError:
                 pass
-
-
-def when_ready(server):
-    subprocess.check_call(["/usr/bin/horizon-assets-compress"])
 
 
 def post_worker_init(worker):
