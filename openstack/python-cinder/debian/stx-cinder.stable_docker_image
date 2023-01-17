@@ -1,0 +1,10 @@
+BUILDER=loci
+LABEL=stx-cinder
+PROJECT=cinder
+DIST_REPOS="OS"
+PROJECT_REPO=https://opendev.org/openstack/cinder.git
+PROJECT_REF=stable/ussuri
+NON_UNIQUE_SYSTEM_ACCOUNT="yes"
+DIST_PACKAGES="nfs-common"
+PIP_PACKAGES="pycryptodomex python-swiftclient pylint"
+PROFILES="fluent cinder lvm ceph qemu"
