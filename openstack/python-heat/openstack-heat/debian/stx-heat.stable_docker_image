@@ -6,5 +6,5 @@ PROJECT_REF=stable/ussuri
 DIST_REPOS="OS"
 NON_UNIQUE_SYSTEM_ACCOUNT="yes"
 PIP_PACKAGES="pycryptodomex pylint"
-DIST_PACKAGES="libxslt1.1"
+DIST_PACKAGES="curl libxslt1.1"
 PROFILES="fluent heat apache"
