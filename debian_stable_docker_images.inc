@@ -1,7 +1,13 @@
+openstack/openstack-aodh
+openstack/openstack-ironic
 openstack/python-barbican
 openstack/python-cinder
 openstack/python-glance
+openstack/python-gnocchi
 openstack/python-heat/openstack-heat
+openstack/python-horizon
+openstack/python-keystone
 openstack/python-neutron
 openstack/python-openstackclient
+openstack/python-placement
 openstack/python-platformclients
