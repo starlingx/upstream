@@ -1,10 +1,11 @@
 BUILDER=loci
-LABEL=stx-placement
-PROJECT=placement
-PROJECT_REPO=https://opendev.org/openstack/placement.git
+LABEL=stx-aodh
+PROJECT=aodh
+PROJECT_REPO=https://opendev.org/openstack/aodh.git
+PROJECT_REF=stable/ussuri
 PROJECT_UID=42425
 PROJECT_GID=42425
-PIP_PACKAGES="pycryptodomex httplib2"
+PIP_PACKAGES="pylint SQLAlchemy gnocchiclient aodhclient"
 DIST_REPOS="OS"
 PROFILES="apache"
 CUSTOMIZATION="\
