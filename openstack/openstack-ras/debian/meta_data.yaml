@@ -6,4 +6,6 @@ dl_path:
   md5sum: 58b82fa1d64ea59bad345d01bafb71be
 revision:
   dist: $STX_DIST
-  PKG_GITREVCOUNT: true
+  GITREVCOUNT:
+    BASE_SRCREV: 0e4f52c207a69767a6f0f6fe1f1737ac024d4235
+    SRC_DIR: ${MY_REPO}/stx/upstream/openstack/openstack-ras

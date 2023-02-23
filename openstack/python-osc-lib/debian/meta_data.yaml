@@ -7,4 +7,6 @@ dl_path:
   md5sum: b72d416dd21b369d89c1dc3f8de42705
 revision:
   dist: $STX_DIST
-  PKG_GITREVCOUNT: true
+  GITREVCOUNT:
+    BASE_SRCREV: 5d546e3ceedbd0f5df7f1434427ff2244b3cdf6d
+    SRC_DIR: ${MY_REPO}/stx/upstream/openstack/python-osc-lib

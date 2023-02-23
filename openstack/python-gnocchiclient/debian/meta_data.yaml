@@ -2,9 +2,11 @@
 debname: python-gnocchiclient
 debver: 7.0.6-1
 dl_path:
-    name: python-gnocchiclient-debian-7.0.6-1.tar.gz
-    url: https://salsa.debian.org/openstack-team/clients/python-gnocchiclient/-/archive/debian/7.0.6-1/python-gnocchiclient-debian-7.0.6-1.tar.gz
-    md5sum: 3ee6a1ee65fb1a4dbd86038257b33c04
+  name: python-gnocchiclient-debian-7.0.6-1.tar.gz
+  url: https://salsa.debian.org/openstack-team/clients/python-gnocchiclient/-/archive/debian/7.0.6-1/python-gnocchiclient-debian-7.0.6-1.tar.gz
+  md5sum: 3ee6a1ee65fb1a4dbd86038257b33c04
 revision:
-    dist: $STX_DIST
-    PKG_GITREVCOUNT: true
+  dist: $STX_DIST
+  GITREVCOUNT:
+    BASE_SRCREV: 7bda415fa4d29f60903a123c2b064a5fcbc9d44f
+    SRC_DIR: ${MY_REPO}/stx/upstream/openstack/python-gnocchiclient

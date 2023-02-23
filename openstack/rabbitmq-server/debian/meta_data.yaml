@@ -7,4 +7,6 @@ dl_path:
   md5sum: 1c4dea34094984e01c7b87b63e83ba2f
 revision:
   dist: $STX_DIST
-  PKG_GITREVCOUNT: true
+  GITREVCOUNT:
+    BASE_SRCREV: b2e2f6cbd545e247e6ad15d5e0da7d3e14c1b8c2
+    SRC_DIR: ${MY_REPO}/stx/upstream/openstack/rabbitmq-server

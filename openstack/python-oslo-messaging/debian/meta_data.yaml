@@ -7,4 +7,6 @@ dl_path:
   md5sum: 7e2835c989b5d148288fc713d8c8735d
 revision:
   dist: $STX_DIST
-  PKG_GITREVCOUNT: true
+  GITREVCOUNT:
+    BASE_SRCREV: ed7ef5eb53e598fb9280cf10c4c5a46b5369606b
+    SRC_DIR: ${MY_REPO}/stx/upstream/openstack/python-oslo-messaging

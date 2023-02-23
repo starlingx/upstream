@@ -2,9 +2,11 @@
 debname: keystone
 debver: 2:18.0.0-3
 dl_path:
-    name: keystone-debian-18.0.0-3.tar.gz
-    url: https://salsa.debian.org/openstack-team/services/keystone/-/archive/debian/18.0.0-3/keystone-debian-18.0.0-3.tar.gz
-    md5sum: fba7c47672b976cdcab5c33f49a5d2fd
+  name: keystone-debian-18.0.0-3.tar.gz
+  url: https://salsa.debian.org/openstack-team/services/keystone/-/archive/debian/18.0.0-3/keystone-debian-18.0.0-3.tar.gz
+  md5sum: fba7c47672b976cdcab5c33f49a5d2fd
 revision:
-    dist: $STX_DIST
-    PKG_GITREVCOUNT: true
+  dist: $STX_DIST
+  GITREVCOUNT:
+    BASE_SRCREV: e866623a4fe0cebc0d0f6a7b3384e5c412ed18d0
+    SRC_DIR: ${MY_REPO}/stx/upstream/openstack/keystone

@@ -7,4 +7,6 @@ dl_path:
   md5sum: 6c26ff316b869ca12e09e7f3e77c150e
 revision:
   dist: $STX_DIST
-  PKG_GITREVCOUNT: true
+  GITREVCOUNT:
+    BASE_SRCREV: 1940c35cce172a46821cc224afaa720db89bee98
+    SRC_DIR: ${MY_REPO}/stx/upstream/openstack/openstack-pkg-tools

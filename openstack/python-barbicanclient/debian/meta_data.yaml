@@ -7,4 +7,6 @@ dl_path:
   md5sum: 80fe9db068b5ca8638f1ed63dbff7327
 revision:
   dist: $STX_DIST
-  PKG_GITREVCOUNT: true
+  GITREVCOUNT:
+    BASE_SRCREV: 155a78233f9c28eae9b452ef0a8fbcc855b8be73
+    SRC_DIR: ${MY_REPO}/stx/upstream/openstack/python-barbicanclient
