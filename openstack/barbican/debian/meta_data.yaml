@@ -1,10 +1,7 @@
 ---
 debname: barbican
-debver: 1:11.0.0-3
-dl_path:
-  name: barbican-debian-11.0.0-3.tar.gz
-  url: https://salsa.debian.org/openstack-team/services/barbican/-/archive/debian/11.0.0-3/barbican-debian-11.0.0-3.tar.gz
-  md5sum: 44caa91c9df25e29f399a3bbdb22d375
+debver: 1:11.0.0-3+deb11u1
+archive: https://snapshot.debian.org/archive/debian/20230529T205957Z/pool/main/b/barbican/
 revision:
   dist: $STX_DIST
   GITREVCOUNT:
