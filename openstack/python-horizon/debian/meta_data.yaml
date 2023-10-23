@@ -1,10 +1,10 @@
 ---
 debname: horizon
-debver: 18.6.2-5
+debver: 18.6.2-5+deb11u2
 dl_path:
-  name: horizon-debian-18.6.2-5.tar.gz
-  url: https://salsa.debian.org/openstack-team/services/horizon/-/archive/debian/18.6.2-5/horizon-debian-18.6.2-5.tar.gz
-  md5sum: 9c41bd3d52c5d5466e622ef8014da0fa
+  name: horizon-debian-18.6.2-5+deb11u2.tar.gz
+  url: https://salsa.debian.org/openstack-team/services/horizon/-/archive/debian/18.6.2-5+deb11u2/horizon-debian-18.6.2-5+deb11u2.tar.gz
+  md5sum: 1f30ef66c54321ffcf8ec6cbb2c7fc2d
 src_files:
   - centos/files/guni_config.py
   - centos/files/horizon-assets-compress
