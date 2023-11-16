@@ -8,5 +8,5 @@ PIP_PACKAGES="pycryptodomex httplib2 pyopenssl ndg-httpsclient pyasn1 \
     six prettytable PyYAML python-keystoneclient  python-barbicanclient \
     python-openstackclient cgtsclient fmclient distributedcloud_client \
     osprofiler beautifulsoup4 oidcauthtools mechanize html5lib webencodings \
-    nfv-client"
+    nfv-client software-client tsconfig"
 CUSTOMIZATION="ln -s /usr/local/kubernetes/1.24.4/stage2/usr/bin/kubectl /usr/bin/"
