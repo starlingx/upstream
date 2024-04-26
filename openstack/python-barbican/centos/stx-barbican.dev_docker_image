@@ -1,7 +1,0 @@
-BUILDER=loci
-LABEL=stx-barbican
-PROJECT=barbican
-PROJECT_REPO=https://opendev.org/openstack/barbican.git
-PIP_PACKAGES="pycrypto"
-PROFILES="fluent"
-

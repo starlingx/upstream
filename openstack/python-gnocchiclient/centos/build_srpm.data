@@ -1,4 +1,0 @@
-TAR_NAME=gnocchiclient
-SRC_DIR=$CGCS_BASE/git/python-gnocchiclient
-TIS_BASE_SRCREV="7.0.7"
-TIS_PATCH_VER=GITREVCOUNT
