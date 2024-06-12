@@ -26,6 +26,8 @@ python3-django-horizon
 python-keystoneclient-doc
 python3-keystoneclient
 
+python3-keystoneauth1
+
 #python-openstackclient
 python-openstackclient-doc
 python3-openstackclient
