@@ -132,6 +132,8 @@ status()
     RETVAL=3
 }
 
+start=$(date +%s%N)
+echo "$(date '+%Y-%m-%dT%H:%M:%S:%3N'): action:${1}:start-at:${start: 0:-6} ms" >> /var/log/horizon_sm.log
 case "$1" in
     start)
         start
@@ -151,5 +153,9 @@ case "$1" in
         RETVAL=1
         ;;
 esac
+end=$(date +%s%N)
+echo "$(date '+%Y-%m-%dT%H:%M:%S:%3N'): action:${1}:end-at:${end: 0:-6} ms" >> /var/log/horizon_sm.log
+diff=$((end-start))
+echo "$(date '+%Y-%m-%dT%H:%M:%S:%3N'): action:${1}:took:${diff: 0:-6} ms" >> /var/log/horizon_sm.log
 
 exit $RETVAL
