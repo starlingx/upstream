@@ -31,6 +31,7 @@ APPLIEDDIR="/opt/branding/applied"
 TMPUPLOADDIR="/scratch/horizon"
 
 source /usr/bin/tsconfig
+umask 027
 
 start()
 {
@@ -97,6 +98,10 @@ start()
     # As part of starting horizon we should kill containerized horizon so that it
     # will pickup branding changes
     kubectl --kubeconfig=/etc/kubernetes/admin.conf delete pods -n openstack -l application=horizon 1>/dev/null
+
+    #restrict log file permissions
+    chmod 640 /var/log/horizon/horizon.log
+    chmod 640 /var/log/horizon/gunicorn.log
 }
 
 stop()
