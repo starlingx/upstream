@@ -1,0 +1,1471 @@
+From 5e9dd53cefd1a32f1904e924b4f23b111735c6fd Mon Sep 17 00:00:00 2001
+From: Gustavo Santos <gustavofaganello.santos@windriver.com>
+Date: Thu, 20 May 2021 11:55:58 -0300
+Subject: [PATCH 1/3] Port TC Auto-refresh Code
+
+This change adds the old auto-refresh feature, from Titanium Cloud,
+into the current Openstack Horizon repo, with small adaptations to work
+in the current environment.
+
+Signed-off-by: Gustavo Santos <gustavofaganello.santos@windriver.com>
+Change-Id: Ie0ba020b691584a55f1631a4d32e00f8851fd089
+[ Ported commit on top of Horizon @ 2023.1 Antelope ]
+Signed-off-by: Lucas de Ataides <lucas.deataidesbarreto@windriver.com>
+[ Ported commit on top of Horizon @ Victoria ]
+Signed-off-by: Davi Frossard <dbarrosf@windriver.com>
+---
+ .../static/horizon/js/horizon.d3linechart.js  |  92 +++--
+ .../static/horizon/js/horizon.d3piechart.js   | 112 +++++-
+ horizon/static/horizon/js/horizon.details.js  |  32 ++
+ horizon/static/horizon/js/horizon.messages.js |  14 +
+ horizon/static/horizon/js/horizon.refresh.js  | 135 ++++++++
+ horizon/static/horizon/js/horizon.tables.js   | 320 +++++++++++-------
+ .../horizon/lib/jquery/jquery.query-object.js | 245 ++++++++++++++
+ .../horizon/common/_limit_summary.html        |   2 +-
+ .../templates/hypervisors/index.html          |   6 +-
+ .../templates/horizon/_scripts.html           |   3 +
+ 10 files changed, 787 insertions(+), 174 deletions(-)
+ create mode 100644 horizon/static/horizon/js/horizon.details.js
+ create mode 100644 horizon/static/horizon/js/horizon.refresh.js
+ create mode 100644 horizon/static/horizon/lib/jquery/jquery.query-object.js
+
+diff --git a/horizon/static/horizon/js/horizon.d3linechart.js b/horizon/static/horizon/js/horizon.d3linechart.js
+index b7fbb26af..24791b3c7 100644
+--- a/horizon/static/horizon/js/horizon.d3linechart.js
++++ b/horizon/static/horizon/js/horizon.d3linechart.js
+@@ -237,7 +237,7 @@ horizon.d3_line_chart = {
+       self.slider_element = $(jquery_element.data('slider-selector')).get(0);
+ 
+       // Set the data, undefined if it doesn't exist
+-      self.data = jquery_element.data('data');
++      self.data = jquery_element.data('url');
+       self.url_parameters = jquery_element.data('url_parameters');
+ 
+       if (typeof self.data === 'string') {
+@@ -308,9 +308,7 @@ horizon.d3_line_chart = {
+       */
+ 
+       // Settings defined in the init method of the chart
+-      if (settings){
+-        self.apply_settings(settings);
+-      }
++      self.apply_settings(settings);
+ 
+       // Settings defined in the html data-settings attribute
+       if (self.jquery_element.data('settings')){
+@@ -324,19 +322,21 @@ horizon.d3_line_chart = {
+      * listed in this method.
+      * @param settings An object containing settings of the chart.
+      */
+-    self.apply_settings = function(settings){
+-      var self = this;
+-
+-      var allowed_settings = ['renderer', 'auto_size', 'axes_x', 'axes_y',
+-        'interpolation', 'yMin', 'yMax', 'xMin', 'xMax', 'bar_chart_settings',
+-        'bar_chart_selector', 'composed_chart_selector',
+-        'higlight_last_point', 'axes_y_label'];
+-
+-      jQuery.each(allowed_settings, function(index, setting_name) {
+-        if (settings[setting_name] !== undefined){
+-          self.settings[setting_name] = settings[setting_name];
+-        }
+-      });
++    self.apply_settings = function(settings) {
++      if (settings) {
++        var self = this;
++
++        var allowed_settings = ['renderer', 'auto_size', 'axes_x', 'axes_y',
++          'interpolation', 'yMin', 'yMax', 'xMin', 'xMax', 'bar_chart_settings',
++          'bar_chart_selector', 'composed_chart_selector',
++          'higlight_last_point', 'axes_y_label'];
++
++        $.each(allowed_settings, function(index, setting_name) {
++          if (typeof settings[setting_name] !== 'undefined'){
++            self.settings[setting_name] = settings[setting_name];
++          }
++        });
++      }
+     };
+ 
+     /**
+@@ -417,16 +417,18 @@ horizon.d3_line_chart = {
+       self.stats = data.stats;
+       // The highest priority settings are sent with the data.
+       self.apply_settings(data.settings);
+-
+-      if (self.series.length <= 0) {
+-        $(self.html_element).html(gettext('No data available.'));
+-        $(self.legend_element).empty();
+-        // Setting a fix height breaks things when legend is getting
+-        // bigger.
+-        $(self.legend_element).css('height', '');
+-      } else {
+-        self.render();
++      if (self.series) {
++        if (self.series.length <= 0) {
++          $(self.html_element).html(gettext('No data available.'));
++          $(self.legend_element).empty();
++          // Setting a fix height breaks things when legend is getting
++          // bigger.
++          $(self.legend_element).css('height', '');
++        } else {
++          self.render();
++        }
+       }
++      horizon.refresh.datetime();
+     };
+ 
+     /************************************************************************/
+@@ -467,16 +469,20 @@ horizon.d3_line_chart = {
+       var self = this;
+       var last_point, last_point_color;
+ 
+-      $.map(self.series, function (serie) {
+-        serie.color = last_point_color = self.color(serie.name);
+-        $.map(serie.data, function (statistic) {
+-          // need to parse each date
+-          statistic.x = d3.time.format.utc('%Y-%m-%dT%H:%M:%S').parse(statistic.x);
+-          statistic.x = statistic.x.getTime() / 1000;
+-          last_point = statistic;
+-          last_point.color = serie.color;
++      if (self.series) {
++        $.map(self.series, function (serie) {
++          serie.color = last_point_color = self.color(serie.name);
++          $.map(serie.data, function (statistic) {
++            // need to parse each date
++            //  We know the dates are UTC. We need to append "+00:00" to make d3 respect this
++            statistic.x = statistic.x + '+00:00'
++            statistic.x = d3.time.format.utc('%Y-%m-%dT%H:%M:%S+00:00').parse(statistic.x);
++            statistic.x = statistic.x.getTime() / 1000;
++            last_point = statistic;
++            last_point.color = serie.color;
++          });
+         });
+-      });
++      }
+ 
+       var renderer = self.settings.renderer;
+       if (renderer === 'StaticAxes'){
+@@ -506,6 +512,7 @@ horizon.d3_line_chart = {
+         xMax: self.settings.xMax,
+         interpolation: self.settings.interpolation
+       });
++      self.graph = graph;
+ 
+       /*
+         TODO(lsmola) add jQuery UI slider to make this work
+@@ -552,6 +559,7 @@ horizon.d3_line_chart = {
+ 
+         new Rickshaw.Graph.Behavior.Series.Toggle({
+           graph: graph,
++          timeFixture: new Rickshaw.Fixtures.Time.Local(),
+           legend: legend
+         });
+ 
+@@ -659,7 +667,7 @@ horizon.d3_line_chart = {
+   init: function(selector, settings) {
+     var self = this;
+     $(selector).each(function() {
+-      self.refresh(this, settings);
++      self.redraw(this, settings);
+     });
+ 
+     if (settings !== undefined && settings.auto_resize) {
+@@ -708,6 +716,16 @@ horizon.d3_line_chart = {
+       this.charts.add_or_update(chart)
+     */
+     chart.refresh();
++    $(html_element).data('chart', chart);
++  },
++  redraw: function(html_element) {
++    var chart = $(html_element).data('chart');
++    const is_valid_chart = typeof chart !== 'undefined' && typeof chart.graph !== 'undefined';
++    if (is_valid_chart) {
++        chart.get_size(); // calculate the size
++        chart.graph.setSize(chart.width, chart.height); // update the svg dimensions
++        chart.graph.render(); // re-render data
++    }
+   },
+ 
+   /**
+@@ -799,4 +817,4 @@ horizon.d3_line_chart = {
+ /* Init the graphs */
+ horizon.addInitFunction(function () {
+   horizon.d3_line_chart.init('div[data-chart-type="line_chart"]', {});
+-});
++});
+\ No newline at end of file
+diff --git a/horizon/static/horizon/js/horizon.d3piechart.js b/horizon/static/horizon/js/horizon.d3piechart.js
+index 8bf422b1f..5cb4d34d6 100644
+--- a/horizon/static/horizon/js/horizon.d3piechart.js
++++ b/horizon/static/horizon/js/horizon.d3piechart.js
+@@ -60,6 +60,8 @@ function create_pie(param) {
+ horizon.d3_pie_chart_usage = {
+   init: function() {
+     var self = this;
++    self.arc = create_arc();
++    self.pie = create_pie('percentage');
+ 
+     // Pie Charts
+     var pie_chart_data = $(".pie-chart-usage");
+@@ -73,42 +75,40 @@ horizon.d3_pie_chart_usage = {
+         self.pieChart(i, false);
+       } else {
+         var used = Math.min(parseInt(data, 10), 100);
+-        self.data = [{"percentage":used}, {"percentage":100 - used}];
+-        self.pieChart(i, true);
++        data = [{'percentage':used}, {'percentage':100 - used}];
++        self.create(self.chart[0][i], data, true);
+       }
+     }
+   },
+   // Draw a pie chart
+-  pieChart: function(i, fill) {
++  create: function(chart, data, fill) {
+     var self = this;
+-    var vis = create_vis(self.chart[0][i]);
+-    var arc = create_arc();
+-    var pie = create_pie("percentage");
++    var vis = create_vis(chart);
+ 
+     // Draw an empty pie chart
+     vis.selectAll(".arc")
+-      .data(pie([{"percentage":10}]))
++      .data(self.pie([{'percentage':10}]))
+       .enter()
+       .append("path")
+       .attr("class","arc")
+-      .attr("d", arc);
++      .attr('d', self.arc);
+ 
+     // Animate filling the pie chart
+     var animate = function(data) {
+       vis.selectAll(".arc")
+-        .data(pie(data))
++        .data(self.pie(data))
+         .enter()
+         .append("path")
+         .attr("class", function() {
+           var ret_val = "arc inner";
+-          if (self.data[0].percentage >= 100) {
++          if (data && data[0].percentage >= 100) {
+             ret_val += " FULL";
+-          } else if (self.data[0].percentage >= 80) {
++          } else if (data && data[0].percentage >= 80) {
+             ret_val += " NEARLY_FULL";
+           }
+           return ret_val;
+         })
+-        .attr("d", arc)
++        .attr("d", self.arc)
+         .transition()
+         .duration(500)
+         .attrTween("d", function(start) {
+@@ -118,7 +118,7 @@ horizon.d3_pie_chart_usage = {
+             endAngle: 2 * Math.PI * (100 - start.value) / 100
+           };
+           var tween = d3.interpolate(start, end);
+-          return function(t) { return arc(tween(t)); };
++          return function(t) { return self.arc(tween(t)); };
+         });
+     };
+ 
+@@ -127,18 +127,53 @@ horizon.d3_pie_chart_usage = {
+         .attr("class", "chart-numbers")
+         .attr('text-anchor', 'middle')
+         .attr('dominant-baseline', 'central')
+-        .text(self.data);
++        .text(data);
+     };
+ 
+     if (fill) {
+-      animate(self.data);
++      animate(data);
+     } else {
+ 
+       // TODO: this seems to be very broken...
+       // https://bugs.launchpad.net/horizon/+bug/1490787
+       // It prints: [object Object] to the screen
+-      show_numbers(self.data);
++      show_numbers(data);
+     }
++
++  },
++
++  // Update a pie chart
++  update: function(chart, old_data, data) {
++      var self = this;
++
++      // update fill color based on new percentage
++      d3.select(chart).selectAll('path:nth-child(2)')
++          .attr('class', function() {
++            var ret_val = 'arc inner';
++            if (data && data[0].percentage >= 100) {
++              ret_val += ' FULL';
++            } else if (data && data[0].percentage >= 80) {
++              ret_val += ' NEARLY_FULL';
++            }
++            return ret_val;
++          })
++
++      d3.select(chart).selectAll('path:nth-child(2)')
++        .data(self.pie(data))
++        .each(function(d) {return self.current = d;})
++        .transition()
++          .duration(500)
++          .attrTween('d', function(a) {
++            if (old_data) {
++              var start = {
++                startAngle: 0,
++                endAngle: 2 * Math.PI * (old_data[0].percentage) / 100
++              };
++              var tween = d3.interpolate(start, a);
++              self.current = tween(0);
++              return function(t) { return self.arc(tween(t)); }
++            }
++          })
+   }
+ };
+ 
+@@ -260,8 +295,51 @@ horizon.d3_pie_chart_distribution = {
+   }
+ };
+ 
++// Auto page refresh handler
++horizon.d3_pie_chart_usage.refresh = function(html) {
++    var refreshed = true;
++
++    $(html).find('.pie-chart-usage').each(function(index, chart) {
++        var $new_chart = $(this);
++        var $old_chart = $('#' + $new_chart.attr('id'));
++
++        if (!$old_chart.length) {
++            // Page structure has changed, abort refresh
++            refreshed = false;
++            return false;
++        }
++
++        if ($old_chart.data('used') != $new_chart.data('used')) {
++            // Update the used data attribute
++            var used = parseInt($new_chart.data('used'));
++            var old_used = parseInt($old_chart.data('used'));
++            $old_chart.data('used', used);
++
++            // Update the chart
++            var chart = d3.select('#' + $new_chart.attr('id'));
++            var data = [{'percentage':used}, {'percentage':100 - used}];
++            var old_data = [{'percentage':old_used}, {'percentage':100 - old_used}];
++
++            horizon.d3_pie_chart_usage.update(chart[0][0], old_data, data);
++
++            // Update the caption (if present)
++            var $new_bar = $new_chart.closest('.d3_quota_bar');
++            var $old_bar = $old_chart.closest('.d3_quota_bar');
++            $old_bar.find('.quota_subtitle').replaceWith($new_bar.find('.quota_subtitle'));
++        }
++    });
++
++    return refreshed;
++};
++
+ 
+ horizon.addInitFunction(function () {
++
++  // Register callback handler to update the charts on page refresh
++  if ($('.pie-chart-usage').length > 0) {
++      horizon.refresh.addRefreshFunction(horizon.d3_pie_chart_usage.refresh);
++  }
++
+   horizon.d3_pie_chart_usage.init();
+   horizon.d3_pie_chart_distribution.init();
+-});
++});
+\ No newline at end of file
+diff --git a/horizon/static/horizon/js/horizon.details.js b/horizon/static/horizon/js/horizon.details.js
+new file mode 100644
+index 000000000..7976c0d14
+--- /dev/null
++++ b/horizon/static/horizon/js/horizon.details.js
+@@ -0,0 +1,32 @@
++/* Functionality related to detail panes */
++horizon.details = {
++    refresh: function(html) {
++        var $new_details = $(html).find('.detail > dl').parent();
++        var $old_details = $('.detail > dl').parent();
++        var $new_title = $(html).find('.detail > dl > .word-wrap:first').text();
++        var $old_title = $('.detail-header > div > div > span');
++
++        if ($new_details.length != $old_details.length) {
++            // Page structure has changed, abort refresh
++            return false;
++        }
++
++        $new_details.each(function(index, elm) {
++            var $new_detail = $(this);
++            var $old_detail = $($old_details.get(index));
++            if ($new_detail.html() != $old_detail.html()) {
++                $old_detail.replaceWith($new_detail);
++                $old_title.text($new_title);
++            }
++        });
++
++        return true;
++    }
++};
++
++horizon.addInitFunction(function() {
++  if ($('.detail > dl').length > 0) {
++      // Register callback handler to update the detail panels on page refresh
++      horizon.refresh.addRefreshFunction(horizon.details.refresh);
++  }
++});
+diff --git a/horizon/static/horizon/js/horizon.messages.js b/horizon/static/horizon/js/horizon.messages.js
+index 6d3541814..0018d10b4 100644
+--- a/horizon/static/horizon/js/horizon.messages.js
++++ b/horizon/static/horizon/js/horizon.messages.js
+@@ -48,6 +48,14 @@ horizon.clearErrorMessages = function() {
+   $('#main_content .messages .alert.alert-danger').remove();
+ };
+ 
++horizon.clearInfoMessages = function() {
++  $('#main_content .messages .alert.alert-info').remove();
++};
++
++horizon.clearWarningMessages = function() {
++  $('#main_content .messages .alert.alert-warning').remove();
++};
++
+ horizon.clearSuccessMessages = function() {
+   $('#main_content .messages .alert.alert-success').remove();
+ };
+@@ -74,6 +82,12 @@ horizon.autoDismissAlert = function ($alert) {
+   }
+ };
+ 
++horizon.autoDismissAlerts = function() {
++  $('#main_content .messages .alert').each(function() {
++    horizon.autoDismissAlert($(this));
++  });
++}
++
+ horizon.addInitFunction(function () {
+   // Bind AJAX message handling.
+   $(document).ajaxComplete(function(event, request){
+diff --git a/horizon/static/horizon/js/horizon.refresh.js b/horizon/static/horizon/js/horizon.refresh.js
+new file mode 100644
+index 000000000..8f7273c50
+--- /dev/null
++++ b/horizon/static/horizon/js/horizon.refresh.js
+@@ -0,0 +1,135 @@
++/* Core functionality related to page auto refresh. */
++horizon.refresh = {
++    refresh_interval: 5000,
++    _refresh_functions: [],
++    timeout: null,
++
++    init: function() {
++        // Add page refresh time to page header
++        horizon.refresh.datetime();
++
++        $('#navbar-collapse > div.context_selection > ul > li > ul  li  a ').click(function (){
++          clearTimeout(horizon.refresh.timeout);
++          clearTimeout(horizon.datatables.timeout);
++        });
++
++        // Setup next refresh interval
++        horizon.refresh.timeout = setTimeout(horizon.refresh.update, horizon.refresh.refresh_interval);
++    },
++
++    update: function() {
++        if (!horizon.refresh._refresh_functions.length) {
++            // No refresh handlers registered
++            return;
++        }
++
++        // Ignore any tabs which react badly to auto-refresh
++        var ignore = ['instance_details__console'];
++
++        // Figure out which tabs have been loaded
++        loaded = '';
++        $('.nav-tabs a[data-target]').each(function(index){
++          var slug = $(this).attr('data-target').replace('#','');
++          if ($(this).attr('data-loaded') == 'true' && ignore.indexOf(slug) == -1){
++            if (loaded){loaded+=','}
++            loaded+=slug;
++          }
++        });
++
++        // Grab current href (for refresh) but remove the tab parameter ( if exists )
++        var currentHREF = $(location).attr('href');
++        var qryStrObj = jQuery.query.load( currentHREF );
++        var oldQryStr = qryStrObj.toString();
++        var newQryStr = qryStrObj.SET('tab', null).SET('loaded', loaded).COMPACT().toString();
++        if (oldQryStr){
++          var $href=currentHREF.replace(oldQryStr, newQryStr);
++        }else {
++          var $href=currentHREF += newQryStr;
++        }
++
++        horizon.ajax.queue({
++            url: $href,
++            success: function(data, textStatus, jqXHR) {
++                var refreshed = true;
++                if (jqXHR.responseText.length > 0) {
++                    $(horizon.refresh._refresh_functions).each(function (index, f) {
++                        refreshed = f(data);
++                        return refreshed;
++                    });
++                    if (refreshed) {
++                        horizon.refresh.datetime();
++                    }
++                } else {
++                    // assume that the entity has been deleted
++                    location.href = $('#sidebar-accordion a.openstack-panel.active').attr('href');
++                }
++            },
++            error: function(jqXHR, textStatus, error) {
++                // Zero-status usually seen when user navigates away
++                if (jqXHR.status != 0) {
++                    horizon.refresh.alert();
++                }
++            },
++            complete: function(jqXHR, textStatus) {
++
++                // Check for redirect condition
++                var redirect = false
++                switch (jqXHR.status) {
++                case 401:
++                    // Authorization error, likely redirect to login page
++                    redirect = jqXHR.getResponseHeader('X-Horizon-Location');
++                    break;
++                case 404:
++                    // The object seems to be gone, redirect back to main nav
++                    redirect = $('#sidebar-accordion a.openstack-panel.active').attr('href');
++                    break;
++                case 302:
++                    // Object is likely gone and are being redirect to index page
++                    redirect = jqXHR.getResponseHeader('Location');
++                    break;
++                }
++                if (redirect) {
++                    location.href = redirect;
++                }
++
++                horizon.autoDismissAlerts();
++
++                // Check for error condition
++                var messages = $.parseJSON(horizon.ajax.get_messages(jqXHR));
++                var errors = $(messages).filter(function (index, item) {
++                    return item[0] == 'error';
++                });
++                if (errors.length > 0) {
++                    horizon.refresh.alert();
++                }
++
++                // Reset for next refresh interval
++                horizon.refresh.timeout = setTimeout(horizon.refresh.update, horizon.refresh.refresh_interval);
++            }
++        });
++    },
++
++    alert: function() {
++        horizon.clearInfoMessages();
++        horizon.clearErrorMessages();
++        horizon.clearWarningMessages();
++        horizon.alert('info', gettext('Failed to auto refresh page, retrying on next interval.'));
++    },
++
++    datetime: function() {
++        // Update page refresh time
++        var location = $('.datetime');
++        if (location !== null) {
++            var datetime = new Date();
++            location.html(datetime.toLocaleString());
++        }
++    },
++
++    addRefreshFunction: function(f) {
++        horizon.refresh._refresh_functions.push(f);
++    }
++};
++
++horizon.addInitFunction(function() {
++    horizon.refresh.init();
++});
+diff --git a/horizon/static/horizon/js/horizon.tables.js b/horizon/static/horizon/js/horizon.tables.js
+index 5f4278440..2b9b70b4f 100644
+--- a/horizon/static/horizon/js/horizon.tables.js
++++ b/horizon/static/horizon/js/horizon.tables.js
+@@ -17,9 +17,11 @@ horizon.datatables = {
+   update: function () {
+     var $rows_to_update = $('tr.warning.ajax-update');
+     var $table = $rows_to_update.closest('table');
+-    var interval = $rows_to_update.attr('data-update-interval');
+-    var decay_constant = $table.attr('decay_constant');
+-    var requests = [];
++
++    if (horizon.datatables.timeout) {
++      clearTimeout(horizon.datatables.timeout);
++      horizon.datatables.timeout = false;
++    }
+ 
+     // do nothing if there are no rows to update.
+     if($rows_to_update.length <= 0) { return; }
+@@ -27,7 +29,7 @@ horizon.datatables = {
+     // Do not update this row if the action column is expanded
+     if ($rows_to_update.find('.actions_column .btn-group.open').length) {
+       // Wait and try to update again in next interval instead
+-      setTimeout(horizon.datatables.update, interval);
++      horizon.datatables.timeout = false;
+       // Remove interval decay, since this will not hit server
+       $table.removeAttr('decay_constant');
+       return;
+@@ -36,118 +38,37 @@ horizon.datatables = {
+     $rows_to_update.each(function() {
+       var $row = $(this);
+       var $table = $row.closest('table.datatable');
+-
+-      requests.push(
+-        horizon.ajax.queue({
+-          url: $row.attr('data-update-url'),
+-          error: function (jqXHR) {
+-            switch (jqXHR.status) {
+-              // A 404 indicates the object is gone, and should be removed from the table
+-              case 404:
+-                // Update the footer count and reset to default empty row if needed
+-                var row_count, colspan, template, params;
+-
+-                // existing count minus one for the row we're removing
+-                row_count = horizon.datatables.update_footer_count($table, -1);
+-
+-                if(row_count === 0) {
+-                  colspan = $table.find('.table_column_header th').length;
+-                  template = horizon.templates.compiled_templates["#empty_row_template"];
+-                  params = {
+-                      "colspan": colspan,
+-                      no_items_label: gettext("No items to display.")
+-                  };
+-                  var empty_row = template.render(params);
+-                  $row.replaceWith(empty_row);
+-                } else {
+-                  $row.remove();
+-                }
+-                // Reset tablesorter's data cache.
+-                $table.trigger("update");
+-                // Enable launch action if quota is not exceeded
+-                horizon.datatables.update_actions();
+-                break;
+-              default:
+-                console.log(gettext("An error occurred while updating."));
+-                $row.removeClass("ajax-update");
+-                $row.find("i.ajax-updating").remove();
+-                break;
+-            }
+-          },
+-          success: function (data) {
+-            var $new_row = $(data);
+-
+-            if ($new_row.hasClass('warning')) {
+-              var $container = $(document.createElement('div'))
+-                .addClass('progress-text horizon-loading-bar');
+-
+-              var $progress = $(document.createElement('div'))
+-                .addClass('progress progress-striped active')
+-                .appendTo($container);
+-
+-              // Incomplete progress bar addition
+-              $width = $new_row.find('[percent]:first').attr('percent') || "100%";
+-
+-              $(document.createElement('div'))
+-                .addClass('progress-bar')
+-                .css("width", $width)
+-                .appendTo($progress);
+-
+-              // if action/confirm is required, show progress-bar with "?"
+-              // icon to indicate user action is required
+-              if ($new_row.find('.btn-action-required').length > 0) {
+-                $(document.createElement('span'))
+-                  .addClass('fa fa-question-circle progress-bar-text')
+-                  .appendTo($container);
+-              }
+-              $new_row.find("td.warning:last").prepend($container);
+-            }
+-
+-            // Only replace row if the html content has changed
+-            if($new_row.html() !== $row.html()) {
+-
+-              // Directly accessing the checked property of the element
+-              // is MUCH faster than using jQuery's helper method
+-              var $checkbox = $row.find('.table-row-multi-select');
+-              if($checkbox.length && $checkbox[0].checked) {
+-                // Preserve the checkbox if it's already clicked
+-                $new_row.find('.table-row-multi-select').prop('checked', true);
+-              }
+-              $row.replaceWith($new_row);
+-
+-              // TODO(matt-borland, tsufiev): ideally we should solve the
+-              // problem with not-working angular actions in a content added
+-              // by jQuery via replacing jQuery insert with Angular insert.
+-              // Should address this in Newton release
+-              recompileAngularContent($table);
+-
+-              // Reset tablesorter's data cache.
+-              $table.trigger("update");
+-              // Reset decay constant.
+-              $table.removeAttr('decay_constant');
+-              // Check that quicksearch is enabled for this table
+-              // Reset quicksearch's data cache.
+-              if ($table.attr('id') in horizon.datatables.qs) {
+-                horizon.datatables.qs[$table.attr('id')].cache();
+-              }
+-            }
+-          },
+-          complete: function () {
+-            // Revalidate the button check for the updated table
+-            horizon.datatables.validate_button();
+-          }
+-        })
+-      );
+-    });
+-
+-    $.when.apply($, requests).always(function() {
+-      decay_constant = decay_constant || 0;
+-      decay_constant++;
+-      $table.attr('decay_constant', decay_constant);
+-      var next_poll = interval * decay_constant;
+-      // Limit the interval to 30 secs
+-      if(next_poll > 30 * 1000) { next_poll = 30 * 1000; }
+-      setTimeout(horizon.datatables.update, next_poll);
++      // WRS: Performance optimization - disable row refresh to reduce
++      // platform load since we already have periodic page refresh.
++      // This row update is now used solely to do an immediate rendering
++      // of progress bars
++      var $new_row = $row;
++
++      if ($new_row.hasClass('warning')) {
++        var $container = $(document.createElement('div'))
++          .addClass('progress-text horizon-loading-bar');
++
++        var $progress = $(document.createElement('div'))
++          .addClass('progress progress-striped active')
++          .appendTo($container);
++
++        // CGCS: incomplete progress bar addition
++        $width = $new_row.find('[percent]:first').attr('percent') || "100%";
++
++        $(document.createElement('div'))
++          .addClass('progress-bar')
++          .css("width", $width)
++          .appendTo($progress);
++
++        // if action/confirm is required, show progress-bar with "?"
++        // icon to indicate user action is required
++        if ($new_row.find('.btn-action-required').length > 0) {
++          $(document.createElement('span'))
++            .addClass('fa fa-question-circle progress-bar-text')
++            .appendTo($container);
++        }
++        $new_row.find("td.warning:last").prepend($container);
++      }
+     });
+   },
+ 
+@@ -530,6 +451,18 @@ horizon.datatables.remove_no_results_row = function (table) {
+   table.find("tr.empty").remove();
+ };
+ 
++horizon.datatables.replace_row = function (old_row, new_row) {
++  // Directly accessing the checked property of the element
++  // is MUCH faster than using jQuery's helper method
++  var $checkbox = old_row.find('.table-row-multi-select');
++  if($checkbox.length && $checkbox[0].checked) {
++    // Preserve the checkbox if it's already clicked
++    new_row.find('.table-row-multi-select').prop('checked', true);
++  }
++  new_row.addClass("updated");
++  old_row.replaceWith(new_row);
++};
++
+ /*
+  * Fixes the striping of the table after filtering results.
+  **/
+@@ -695,6 +628,149 @@ horizon.datatables.set_table_fixed_filter = function (parent) {
+   });
+ };
+ 
++horizon.datatables.refresh = function (html) {
++  var refreshed = true;
++
++  refresh_start_time = new Date().getTime();
++
++  $(html).find('table.datatable').each(function(index, table) {
++    var $new_table = $(this);
++    var $old_table = $('table#' + $new_table.attr('id'));
++    var changed = false;
++    var row_changed = false;
++
++    // Do not update the table if an action column is expanded
++    if ($old_table.find('.actions_column .btn-group.open').length) {
++      return true;
++    }
++
++    if (horizon.modals.confirm && horizon.modals.confirm.is(":visible")) {
++      return true;
++    }
++
++    // Cleanup updated state
++    $old_table.find('tr.updated').removeClass('updated flash');
++
++    no_results_row_removed = false;
++
++    // Remove old entries that no longer exist
++    $old_table.find('tbody > tr[id]').not('.empty').each(function(index, row) {
++      var $old_row = $(this);
++      var $new_row = $new_table.find('tr#' + $old_row.attr('id').replace(/[!"#$%&'()*+,.\/:;<=>?@[\\\]^`{|}~]/g, "\\$&"));
++
++      if (!$new_row.length) {
++          // Remove stale entry from table
++          $old_row.remove();
++          changed = true;
++      }
++    });
++
++    // Insert or update new entries
++    $($new_table.find('tbody > tr[id]').get().reverse()).not('.empty').each(function(index, row) {
++      row_changed = false;
++      var $new_row = $(this);
++      var $old_row = $old_table.find('tr#' + $new_row.attr('id').replace(/[!"#$%&'()*+,.\/:;<=>?@[\\\]^`{|}~]/g, "\\$&"));
++
++      if ($old_row.length) {
++        // Only replace row if the html content has changed, or it is in the warning state
++        if ($new_row.text() != $old_row.text() || $new_row.hasClass('warning')) {
++          horizon.datatables.replace_row($old_row, $new_row);
++          changed = true;
++          row_changed = true;
++        }
++      } else {
++        // Append the new row since it does not exist in the current table
++        if (!no_results_row_removed) {
++          no_results_row_removed = true;
++          horizon.datatables.remove_no_results_row($old_table);
++        }
++
++        $new_row.addClass("updated");
++        $old_table.find('tbody').prepend($new_row);
++        changed = true;
++        row_changed = true;
++      }
++
++      if (row_changed) {
++        // CGCS: The following code is from the upstream row update
++        // functionality and must be kept up to date
++        if ($new_row.hasClass('warning')) {
++          var $container = $(document.createElement('div'))
++            .addClass('progress-text horizon-loading-bar');
++
++          var $progress = $(document.createElement('div'))
++            .addClass('progress progress-striped active')
++            .appendTo($container);
++
++          // CGCS: incomplete progress bar addition
++          $width = $new_row.find('[percent]:first').attr('percent') || "100%";
++
++          $(document.createElement('div'))
++            .addClass('progress-bar')
++            .css("width", $width)
++            .appendTo($progress);
++
++          // if action/confirm is required, show progress-bar with "?"
++          // icon to indicate user action is required
++          if ($new_row.find('.btn-action-required').length > 0) {
++            $(document.createElement('span'))
++              .addClass('fa fa-question-circle progress-bar-text')
++              .appendTo($container);
++          }
++          $new_row.find("td.warning:last").prepend($container);
++        }
++      }
++    });
++
++    // Update the table actions (which can be affected by system state or quotas)
++    $new_table.find('.table_actions').children('.btn').each(function(index, action) {
++      var $new_action = $(this);
++      var $old_action = $old_table.find('#' + $new_action.attr('id'));
++      if (!$new_action.length || !$old_action.length) {
++        return true;
++      }
++      if ($new_action[0].outerHTML != $old_action[0].outerHTML) {
++        $old_action.replaceWith($new_action);
++        changed = true;
++      }
++    });
++
++    // Update table state if the table has been modified
++    if (changed) {
++      row_count = horizon.datatables.update_footer_count($old_table);
++      if (row_count==0) {
++        horizon.datatables.add_no_results_row($old_table);
++      }
++
++      // Reset tablesorter's data cache.
++      $old_table.trigger("update");
++      horizon.datatables.fix_row_striping($old_table);
++
++      // Reset quicksearch filter cache.
++      if ($new_table.attr('id') in horizon.datatables.qs) {
++        horizon.datatables.qs[$new_table.attr('id')].cache();
++      }
++
++      // Revalidate the button check for the updated table
++      horizon.datatables.validate_button();
++
++      if ($old_table.find('[ng-controller]').length) {
++        recompileAngularContent($old_table);
++      }
++
++      // Flash updated rows
++      $old_table.find('tr.updated').addClass("flash");
++    }
++  });
++
++  refreshed_elapsed_time = new Date().getTime() - refresh_start_time;
++  // uncomment to debug performance on browser log
++  // Don't let this method take more than 1.5 sec 1500 millisecs
++  // console.log("refresh elapsed time = "+ refreshed_elapsed_time);
++
++  return refreshed;
++};
++
+ horizon.addInitFunction(horizon.datatables.init = function() {
+   horizon.datatables.validate_button();
+   horizon.datatables.disable_buttons();
+@@ -734,5 +810,17 @@ horizon.addInitFunction(horizon.datatables.init = function() {
+     horizon.datatables.disable_actions_on_submit($(tab).find(".table_wrapper > form"));
+   });
+ 
++  if ($('table.datatable').length > 0) {
++    // Register callback handler to update the tables on page refresh
++    horizon.refresh.addRefreshFunction(horizon.datatables.refresh);
++  } else {
++    horizon.tabs.addTabLoadFunction(function(tab) {
++      if ($('table.datatable').length > 0) {
++        // Register callback handler to update the tables on page refresh
++        horizon.refresh.addRefreshFunction(horizon.datatables.refresh);
++      }
++    });
++  }
++
+   horizon.datatables.update();
+ });
+diff --git a/horizon/static/horizon/lib/jquery/jquery.query-object.js b/horizon/static/horizon/lib/jquery/jquery.query-object.js
+new file mode 100644
+index 000000000..0c3d90f87
+--- /dev/null
++++ b/horizon/static/horizon/lib/jquery/jquery.query-object.js
+@@ -0,0 +1,245 @@
++﻿/**
++ * jQuery.query - Query String Modification and Creation for jQuery
++ * Written by Blair Mitchelmore (blair DOT mitchelmore AT gmail DOT com)
++ * Licensed under the WTFPL (http://sam.zoy.org/wtfpl/).
++ * Date: 2009/8/13
++ *
++ * @author Blair Mitchelmore
++ * @version 2.2.3
++ *
++ **/
++new function(settings) {
++  // Various Settings
++  var $separator = settings.separator || '&';
++  var $spaces = settings.spaces === false ? false : true;
++  var $suffix = settings.suffix === false ? '' : '[]';
++  var $prefix = settings.prefix === false ? false : true;
++  var $hash = $prefix ? settings.hash === true ? "#" : "?" : "";
++  var $numbers = settings.numbers === false ? false : true;
++
++  jQuery.query = new function() {
++    var is = function(o, t) {
++      return o != undefined && o !== null && (!!t ? o.constructor == t : true);
++    };
++    var parse = function(path) {
++      var m, rx = /\[([^[]*)\]/g, match = /^([^[]+)(\[.*\])?$/.exec(path), base = match[1], tokens = [];
++      while (m = rx.exec(match[2])) tokens.push(m[1]);
++      return [base, tokens];
++    };
++    var set = function(target, tokens, value) {
++      var o, token = tokens.shift();
++      if (typeof target != 'object') target = null;
++      if (token === "") {
++        if (!target) target = [];
++        if (is(target, Array)) {
++          target.push(tokens.length == 0 ? value : set(null, tokens.slice(0), value));
++        } else if (is(target, Object)) {
++          var i = 0;
++          while (target[i++] != null);
++          target[--i] = tokens.length == 0 ? value : set(target[i], tokens.slice(0), value);
++        } else {
++          target = [];
++          target.push(tokens.length == 0 ? value : set(null, tokens.slice(0), value));
++        }
++      } else if (token && token.match(/^\s*[0-9]+\s*$/)) {
++        var index = parseInt(token, 10);
++        if (!target) target = [];
++        target[index] = tokens.length == 0 ? value : set(target[index], tokens.slice(0), value);
++      } else if (token) {
++        var index = token.replace(/^\s*|\s*$/g, "");
++        if (!target) target = {};
++        if (is(target, Array)) {
++          var temp = {};
++          for (var i = 0; i < target.length; ++i) {
++            temp[i] = target[i];
++          }
++          target = temp;
++        }
++        target[index] = tokens.length == 0 ? value : set(target[index], tokens.slice(0), value);
++      } else {
++        return value;
++      }
++      return target;
++    };
++
++    var queryObject = function(a) {
++      var self = this;
++      self.keys = {};
++
++      if (a.queryObject) {
++        jQuery.each(a.get(), function(key, val) {
++          self.SET(key, val);
++        });
++      } else {
++        self.parseNew.apply(self, arguments);
++      }
++      return self;
++    };
++
++    queryObject.prototype = {
++      queryObject: true,
++      parseNew: function(){
++        var self = this;
++        self.keys = {};
++        jQuery.each(arguments, function() {
++          var q = "" + this;
++          q = q.replace(/^[?#]/,''); // remove any leading ? || #
++          q = q.replace(/[;&]$/,''); // remove any trailing & || ;
++          if ($spaces) q = q.replace(/[+]/g,' '); // replace +'s with spaces
++
++          jQuery.each(q.split(/[&;]/), function(){
++            var key = decodeURIComponent(this.split('=')[0] || "");
++            var val = decodeURIComponent(this.split('=')[1] || "");
++
++            if (!key) return;
++
++            if ($numbers) {
++              if (/^[+-]?[0-9]+\.[0-9]*$/.test(val)) // simple float regex
++                val = parseFloat(val);
++              else if (/^[+-]?[1-9][0-9]*$/.test(val)) // simple int regex
++                val = parseInt(val, 10);
++            }
++
++            val = (!val && val !== 0) ? true : val;
++
++            self.SET(key, val);
++          });
++        });
++        return self;
++      },
++      has: function(key, type) {
++        var value = this.get(key);
++        return is(value, type);
++      },
++      GET: function(key) {
++        if (!is(key)) return this.keys;
++        var parsed = parse(key), base = parsed[0], tokens = parsed[1];
++        var target = this.keys[base];
++        while (target != null && tokens.length != 0) {
++          target = target[tokens.shift()];
++        }
++        return typeof target == 'number' ? target : target || "";
++      },
++      get: function(key) {
++        var target = this.GET(key);
++        if (is(target, Object))
++          return jQuery.extend(true, {}, target);
++        else if (is(target, Array))
++          return target.slice(0);
++        return target;
++      },
++      SET: function(key, val) {
++        var value = !is(val) ? null : val;
++        var parsed = parse(key), base = parsed[0], tokens = parsed[1];
++        var target = this.keys[base];
++        this.keys[base] = set(target, tokens.slice(0), value);
++        return this;
++      },
++      set: function(key, val) {
++        return this.copy().SET(key, val);
++      },
++      REMOVE: function(key, val) {
++        if (val) {
++          var target = this.GET(key);
++          if (is(target, Array)) {
++            for (tval in target) {
++                target[tval] = target[tval].toString();
++            }
++            var index = $.inArray(val, target);
++            if (index >= 0) {
++              key = target.splice(index, 1);
++              key = key[index];
++            } else {
++              return;
++            }
++          } else if (val != target) {
++              return;
++          }
++        }
++        return this.SET(key, null).COMPACT();
++      },
++      remove: function(key, val) {
++        return this.copy().REMOVE(key, val);
++      },
++      EMPTY: function() {
++        var self = this;
++        jQuery.each(self.keys, function(key, value) {
++          delete self.keys[key];
++        });
++        return self;
++      },
++      load: function(url) {
++        var hash = url.replace(/^.*?[#](.+?)(?:\?.+)?$/, "$1");
++        var search = url.replace(/^.*?[?](.+?)(?:#.+)?$/, "$1");
++        return new queryObject(url.length == search.length ? '' : search, url.length == hash.length ? '' : hash);
++      },
++      empty: function() {
++        return this.copy().EMPTY();
++      },
++      copy: function() {
++        return new queryObject(this);
++      },
++      COMPACT: function() {
++        function build(orig) {
++          var obj = typeof orig == "object" ? is(orig, Array) ? [] : {} : orig;
++          if (typeof orig == 'object') {
++            function add(o, key, value) {
++              if (is(o, Array))
++                o.push(value);
++              else
++                o[key] = value;
++            }
++            jQuery.each(orig, function(key, value) {
++              if (!is(value)) return true;
++              add(obj, key, build(value));
++            });
++          }
++          return obj;
++        }
++        this.keys = build(this.keys);
++        return this;
++      },
++      compact: function() {
++        return this.copy().COMPACT();
++      },
++      toString: function() {
++        var i = 0, queryString = [], chunks = [], self = this;
++        var encode = function(str) {
++          str = str + "";
++          str = encodeURIComponent(str);
++          if ($spaces) str = str.replace(/%20/g, "+");
++          return str;
++        };
++        var addFields = function(arr, key, value) {
++          if (!is(value) || value === false) return;
++          var o = [encode(key)];
++          if (value !== true) {
++            o.push("=");
++            o.push(encode(value));
++          }
++          arr.push(o.join(""));
++        };
++        var build = function(obj, base) {
++          var newKey = function(key) {
++            return !base || base == "" ? [key].join("") : [base, "[", key, "]"].join("");
++          };
++          jQuery.each(obj, function(key, value) {
++            if (typeof value == 'object')
++              build(value, newKey(key));
++            else
++              addFields(chunks, newKey(key), value);
++          });
++        };
++
++        build(this.keys);
++
++        if (chunks.length > 0) queryString.push($hash);
++        queryString.push(chunks.join($separator));
++
++        return queryString.join("");
++      }
++    };
++
++    return new queryObject(location.search, location.hash);
++  };
++}(jQuery.query || {}); // Pass in jQuery.query as settings object
+diff --git a/horizon/templates/horizon/common/_limit_summary.html b/horizon/templates/horizon/common/_limit_summary.html
+index 494fbb998..199cd4194 100644
+--- a/horizon/templates/horizon/common/_limit_summary.html
++++ b/horizon/templates/horizon/common/_limit_summary.html
+@@ -10,7 +10,7 @@
+           <div class="row">
+         {% endif %}
+             <div class="d3_quota_bar col-lg-2 col-md-4 col-sm-4 col-xs-6">
+-              <div class="pie-chart-usage" data-used="{% quotapercent chart.used chart.quota %}"></div>
++              <div id ="{{ chart.name.split|join:'_' }}" class="pie-chart-usage" data-used="{% quotapercent chart.used chart.quota %}"></div>
+               <div class="quota_title" title="{{ chart.name }}" data-toggle="tooltip"> {{ chart.name }}</div>
+               <div class="quota_subtitle">
+                 {% if chart.quota|quotainf != '-1' %}
+diff --git a/openstack_dashboard/dashboards/admin/hypervisors/templates/hypervisors/index.html b/openstack_dashboard/dashboards/admin/hypervisors/templates/hypervisors/index.html
+index 4421794b6..d0c35c0da 100644
+--- a/openstack_dashboard/dashboards/admin/hypervisors/templates/hypervisors/index.html
++++ b/openstack_dashboard/dashboards/admin/hypervisors/templates/hypervisors/index.html
+@@ -7,7 +7,7 @@
+ <div class="quota-dynamic">
+   <h3>{% trans "Hypervisor Summary" %}</h3>
+     <div class="col-sm-4 d3_quota_bar">
+-      <div class="pie-chart-usage" data-used="{% widthratio stats.vcpus_used stats.vcpus 100 %}"></div>
++      <div id="d3-pie-chart-vcpus" class="pie-chart-usage" data-used="{% widthratio stats.vcpus_used stats.vcpus 100 %}"></div>
+       <div class="h5">{% trans "VCPU Usage" %}</div>
+       <div class="h6">
+         {% blocktrans with used=stats.vcpus_used|intcomma available=stats.vcpus|intcomma %}Used <span> {{ used }} </span> of <span> {{ available }} </span>{% endblocktrans %}
+@@ -15,7 +15,7 @@
+     </div>
+ 
+     <div class="col-sm-4 d3_quota_bar">
+-      <div class="pie-chart-usage" data-used="{% widthratio stats.memory_mb_used stats.memory_mb 100 %}"></div>
++      <div id="d3-pie-chart-memory" class="pie-chart-usage" data-used="{% widthratio stats.memory_mb_used stats.memory_mb 100 %}"></div>
+       <div class="h5">{% trans "Memory Usage" %}</div>
+       <div class="h6">
+          {% blocktrans with used=stats.memory_mb_used|mb_float_format available=stats.memory_mb|mb_float_format %}Used <span> {{ used }} </span> of <span> {{ available }} </span>{% endblocktrans %}
+@@ -23,7 +23,7 @@
+     </div>
+ 
+     <div class="col-sm-4 d3_quota_bar">
+-      <div class="pie-chart-usage" data-used="{% widthratio stats.local_gb_used stats.local_gb 100 %}"></div>
++      <div id="d3-pie-chart-disk" class="pie-chart-usage" data-used="{% widthratio stats.local_gb_used stats.local_gb 100 %}"></div>
+        <div class="h5">{% trans "Local Disk Usage" %}</div>
+        <div class="h6">
+          {% blocktrans with used=stats.local_gb_used|diskgbformat available=stats.local_gb|diskgbformat %}Used <span> {{ used }} </span> of <span> {{ available }} </span>{% endblocktrans %}
+diff --git a/openstack_dashboard/templates/horizon/_scripts.html b/openstack_dashboard/templates/horizon/_scripts.html
+index 7e56f029f..fc9a54901 100644
+--- a/openstack_dashboard/templates/horizon/_scripts.html
++++ b/openstack_dashboard/templates/horizon/_scripts.html
+@@ -18,6 +18,7 @@
+   var WEBROOT = "{{ WEBROOT }}";
+ </script>
+ <script src="{{ STATIC_URL }}horizon/lib/jquery/jquery.bootstrap.wizard.js"></script>
++<script src="{{ STATIC_URL }}horizon/lib/jquery/jquery.query-object.js"></script>
+ <script src='{{ STATIC_URL }}horizon/js/horizon.string.js'></script>
+ <script src='{{ STATIC_URL }}horizon/js/horizon.lists.js'></script>
+ <script src='{{ STATIC_URL }}horizon/js/horizon.communication.js'></script>
+@@ -45,6 +46,8 @@
+ <script src='{{ STATIC_URL }}horizon/js/horizon.d3barchart.js'></script>
+ <script src='{{ STATIC_URL }}horizon/js/horizon.sidebar.js'></script>
+ <script src='{{ STATIC_URL }}horizon/js/horizon.extensible_header.js'></script>
++<script src='{{ STATIC_URL }}horizon/js/horizon.refresh.js'></script>
++<script src='{{ STATIC_URL }}horizon/js/horizon.details.js'></script>
+ <script src='{{ STATIC_URL }}js/horizon.instances.js'></script>
+ <script src='{{ STATIC_URL }}js/horizon.quota.js'></script>
+ <script src='{{ STATIC_URL }}js/horizon.metering.js'></script>
+-- 
+2.34.1
+
+
+From c627a08afea486dfd21c8bdcd6c76420c1ed86e9 Mon Sep 17 00:00:00 2001
+From: Gustavo Santos <gustavofaganello.santos@windriver.com>
+Date: Thu, 12 Aug 2021 14:57:57 -0300
+Subject: [PATCH 2/3] Disable auto-refresh action when modal is present
+
+This change disables the auto-refresh action on tables if any modals
+are open on the page.
+
+Elements in tables being replaced by auto-refresh were causing certain
+modal operations, such as items deletion, to fail or be carried out
+incorrectly.
+
+Signed-off-by: Gustavo Santos <gustavofaganello.santos@windriver.com>
+Change-Id: I44a773b1026b74419da04484fa7933c72cd08557
+[ Ported commit on top of Horizon @ Victoria ]
+Signed-off-by: Davi Frossard <dbarrosf@windriver.com>
+---
+ horizon/static/horizon/js/horizon.tables.js | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
+
+diff --git a/horizon/static/horizon/js/horizon.tables.js b/horizon/static/horizon/js/horizon.tables.js
+index 2b9b70b4f..1ad4a609c 100644
+--- a/horizon/static/horizon/js/horizon.tables.js
++++ b/horizon/static/horizon/js/horizon.tables.js
+@@ -644,7 +644,8 @@ horizon.datatables.refresh = function (html) {
+       return true;
+     }
+ 
+-    if (horizon.modals.confirm && horizon.modals.confirm.is(":visible")) {
++    // Do not update the table if a modal is open
++    if (document.getElementsByClassName('modal in').length > 0) {
+       return true;
+     }
+ 
+-- 
+2.34.1
+
+
+From ed3ae7ae04050518aab68c3b18f41fe5ba1e8250 Mon Sep 17 00:00:00 2001
+From: Romulo Leite <romulo.leite@windriver.com>
+Date: Wed, 7 Sep 2022 14:58:10 -0300
+Subject: [PATCH 3/3] Fixing piechart auto-refresh in Horizon
+
+Changing the page refresh to reflect the Data update in the Piechart.
+Adding a new HTML to bring updated data and trigger the animation and
+data change in the Piecharts in Admin/Hypervisors
+
+Test plan:
+
+- PASS - In Devstack  Change the Hypervisors data in DB and see
+ Piecharts changing in  Admin/Hypervisors screen in Horizon
+- PASS - Create new image with the change and apply WRO
+- PASS - Test the autorefresh on the WRO application
+
+Signed-off-by: Romulo Leite <romulo.leite@windriver.com>
+Change-Id: Idba58378f15101f436d66cf5397d4e00b9c69eb1
+[ Ported commit on top of Horizon @ Victoria ]
+Signed-off-by: Davi Frossard <dbarrosf@windriver.com>
+---
+ .../static/horizon/js/horizon.d3piechart.js   |  7 +++++
+ .../common/_detail_table_hypervisors.html     | 21 ++++++++++++++
+ .../dashboards/admin/hypervisors/tabs.py      | 12 +++++++-
+ .../templates/hypervisors/index.html          | 28 +++++++++----------
+ 4 files changed, 53 insertions(+), 15 deletions(-)
+ create mode 100644 horizon/templates/horizon/common/_detail_table_hypervisors.html
+
+diff --git a/horizon/static/horizon/js/horizon.d3piechart.js b/horizon/static/horizon/js/horizon.d3piechart.js
+index 5cb4d34d6..a4a2e9432 100644
+--- a/horizon/static/horizon/js/horizon.d3piechart.js
++++ b/horizon/static/horizon/js/horizon.d3piechart.js
+@@ -326,6 +326,13 @@ horizon.d3_pie_chart_usage.refresh = function(html) {
+             var $new_bar = $new_chart.closest('.d3_quota_bar');
+             var $old_bar = $old_chart.closest('.d3_quota_bar');
+             $old_bar.find('.quota_subtitle').replaceWith($new_bar.find('.quota_subtitle'));
++
++            // Update the chart text
++            $(html).find(".h6").each(function() {
++              var $new_text = $(this);
++              var $old_text =  $('#' + ($new_text.attr('id').replace('-refreshed','')));
++              $old_text.text($new_text.text());
++            })
+         }
+     });
+ 
+diff --git a/horizon/templates/horizon/common/_detail_table_hypervisors.html b/horizon/templates/horizon/common/_detail_table_hypervisors.html
+new file mode 100644
+index 000000000..887d7f60e
+--- /dev/null
++++ b/horizon/templates/horizon/common/_detail_table_hypervisors.html
+@@ -0,0 +1,21 @@
++{% load i18n horizon humanize sizeformat %}
++
++{% block main %}
++<div class="quota-dynamic" style="display:none">
++        <div id="d3-pie-chart-vcpus" class="pie-chart-usage" data-used="{% widthratio stats.vcpus_used stats.vcpus 100 %}"></div>
++        <div id="d3-pie-chart-vcpus-text-refreshed" class="h6">
++          {% blocktrans with used=stats.vcpus_used|intcomma available=stats.vcpus|intcomma %}Used <span> {{ used }} </span> of <span> {{ available }} </span>{% endblocktrans %}
++        </div>
++        <div id="d3-pie-chart-memory" class="pie-chart-usage" data-used="{% widthratio stats.memory_mb_used stats.memory_mb 100 %}"></div>
++        <div id="d3-pie-chart-memory-text-refreshed" class="h6">
++           {% blocktrans with used=stats.memory_mb_used|mb_float_format available=stats.memory_mb|mb_float_format %}Used <span> {{ used }} </span> of <span> {{ available }} </span>{% endblocktrans %}
++        </div>
++        <div id="d3-pie-chart-disk" class="pie-chart-usage" data-used="{% widthratio stats.local_gb_used stats.local_gb 100 %}"></div>
++         <div class="h5">{% trans "Local Disk Usage" %}</div>
++         <div id="d3-pie-chart-disk-text-refreshed" class="h6">
++           {% blocktrans with used=stats.local_gb_used|diskgbformat available=stats.local_gb|diskgbformat %}Used <span> {{ used }} </span> of <span> {{ available }} </span>{% endblocktrans %}
++         </div>
++  </div>
++{% endblock %}
++
++{{ table.render }}
+diff --git a/openstack_dashboard/dashboards/admin/hypervisors/tabs.py b/openstack_dashboard/dashboards/admin/hypervisors/tabs.py
+index af2b40038..87fb0d3f3 100644
+--- a/openstack_dashboard/dashboards/admin/hypervisors/tabs.py
++++ b/openstack_dashboard/dashboards/admin/hypervisors/tabs.py
+@@ -26,7 +26,7 @@ class HypervisorTab(tabs.TableTab):
+     table_classes = (tables.AdminHypervisorsTable,)
+     name = _("Hypervisor")
+     slug = "hypervisor"
+-    template_name = "horizon/common/_detail_table.html"
++    template_name = "horizon/common/_detail_table_hypervisors.html"
+ 
+     def get_hypervisors_data(self):
+         hypervisors = []
+@@ -39,6 +39,16 @@ class HypervisorTab(tabs.TableTab):
+ 
+         return hypervisors
+ 
++    def get_context_data(self,request,  **kwargs):
++        context = super().get_context_data(self.request, **kwargs)
++        try:
++            context["stats"] = nova.hypervisor_stats(self.request)
++        except Exception:
++            exceptions.handle(self.request,
++                              _('Unable to retrieve hypervisor statistics.'))
++
++        return context
++
+ 
+ class HypervisorHostTabs(tabs.TabGroup):
+     slug = "hypervisor_info"
+diff --git a/openstack_dashboard/dashboards/admin/hypervisors/templates/hypervisors/index.html b/openstack_dashboard/dashboards/admin/hypervisors/templates/hypervisors/index.html
+index d0c35c0da..c1b863253 100644
+--- a/openstack_dashboard/dashboards/admin/hypervisors/templates/hypervisors/index.html
++++ b/openstack_dashboard/dashboards/admin/hypervisors/templates/hypervisors/index.html
+@@ -9,7 +9,7 @@
+     <div class="col-sm-4 d3_quota_bar">
+       <div id="d3-pie-chart-vcpus" class="pie-chart-usage" data-used="{% widthratio stats.vcpus_used stats.vcpus 100 %}"></div>
+       <div class="h5">{% trans "VCPU Usage" %}</div>
+-      <div class="h6">
++      <div id="d3-pie-chart-vcpus-text" class="h6">
+         {% blocktrans with used=stats.vcpus_used|intcomma available=stats.vcpus|intcomma %}Used <span> {{ used }} </span> of <span> {{ available }} </span>{% endblocktrans %}
+       </div>
+     </div>
+@@ -17,22 +17,22 @@
+     <div class="col-sm-4 d3_quota_bar">
+       <div id="d3-pie-chart-memory" class="pie-chart-usage" data-used="{% widthratio stats.memory_mb_used stats.memory_mb 100 %}"></div>
+       <div class="h5">{% trans "Memory Usage" %}</div>
+-      <div class="h6">
+-         {% blocktrans with used=stats.memory_mb_used|mb_float_format available=stats.memory_mb|mb_float_format %}Used <span> {{ used }} </span> of <span> {{ available }} </span>{% endblocktrans %}
++      <div id="d3-pie-chart-memory-text" class="h6">
++        {% blocktrans with used=stats.memory_mb_used|mb_float_format available=stats.memory_mb|mb_float_format %}Used <span> {{ used }} </span> of <span> {{ available }} </span>{% endblocktrans %}
+       </div>
+     </div>
+ 
+     <div class="col-sm-4 d3_quota_bar">
+       <div id="d3-pie-chart-disk" class="pie-chart-usage" data-used="{% widthratio stats.local_gb_used stats.local_gb 100 %}"></div>
+-       <div class="h5">{% trans "Local Disk Usage" %}</div>
+-       <div class="h6">
+-         {% blocktrans with used=stats.local_gb_used|diskgbformat available=stats.local_gb|diskgbformat %}Used <span> {{ used }} </span> of <span> {{ available }} </span>{% endblocktrans %}
+-       </div>
++      <div class="h5">{% trans "Local Disk Usage" %}</div>
++        <div id="d3-pie-chart-disk-text" class="h6">
++          {% blocktrans with used=stats.local_gb_used|diskgbformat available=stats.local_gb|diskgbformat %}Used <span> {{ used }} </span> of <span> {{ available }} </span>{% endblocktrans %}
++        </div>
++      </div>
++    </div>
++    <div class="row-fluid">
++      <div class="col-sm-12">
++        {{ tab_group.render }}
++      </div>
+     </div>
+-</div>
+-<div class="row-fluid">
+-  <div class="col-sm-12">
+-    {{ tab_group.render }}
+-  </div>
+-</div>
+-{% endblock %}
++    {% endblock %}
+-- 
+2.34.1
