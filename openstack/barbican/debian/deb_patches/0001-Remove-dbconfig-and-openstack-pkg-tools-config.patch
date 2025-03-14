@@ -11,9 +11,9 @@ Story: 2009101
 Task: 44026
 
 Signed-off-by: Charles Short <charles.short@windriver.com>
-diff -Naurp barbican-11.0.0.orig/debian/barbican-api.config.in barbican-11.0.0/debian/barbican-api.config.in
---- barbican-11.0.0.orig/debian/barbican-api.config.in	2021-04-20 09:59:15.000000000 +0000
-+++ barbican-11.0.0/debian/barbican-api.config.in	1970-01-01 00:00:00.000000000 +0000
+diff -Naurp barbican-13.0.1.orig/debian/barbican-api.config.in barbican-13.0.1/debian/barbican-api.config.in
+--- barbican-13.0.1.orig/debian/barbican-api.config.in	2021-04-20 09:59:15.000000000 +0000
++++ barbican-13.0.1/debian/barbican-api.config.in	1970-01-01 00:00:00.000000000 +0000
 @@ -1,12 +0,0 @@
 -#!/bin/sh
 -
@@ -27,9 +27,9 @@ diff -Naurp barbican-11.0.0.orig/debian/barbican-api.config.in barbican-11.0.0/d
 -db_go
 -
 -exit 0
-diff -Naurp barbican-11.0.0.orig/debian/barbican-api.postinst.in barbican-11.0.0/debian/barbican-api.postinst.in
---- barbican-11.0.0.orig/debian/barbican-api.postinst.in	2021-04-20 09:59:15.000000000 +0000
-+++ barbican-11.0.0/debian/barbican-api.postinst.in	1970-01-01 00:00:00.000000000 +0000
+diff -Naurp barbican-13.0.1.orig/debian/barbican-api.postinst.in barbican-13.0.1/debian/barbican-api.postinst.in
+--- barbican-13.0.1.orig/debian/barbican-api.postinst.in	2021-04-20 09:59:15.000000000 +0000
++++ barbican-13.0.1/debian/barbican-api.postinst.in	1970-01-01 00:00:00.000000000 +0000
 @@ -1,17 +0,0 @@
 -#!/bin/sh
 -
@@ -48,9 +48,9 @@ diff -Naurp barbican-11.0.0.orig/debian/barbican-api.postinst.in barbican-11.0.0
 -#DEBHELPER#
 -
 -exit 0
-diff -Naurp barbican-11.0.0.orig/debian/barbican-common.config.in barbican-11.0.0/debian/barbican-common.config.in
---- barbican-11.0.0.orig/debian/barbican-common.config.in	2021-04-20 09:59:15.000000000 +0000
-+++ barbican-11.0.0/debian/barbican-common.config.in	1970-01-01 00:00:00.000000000 +0000
+diff -Naurp barbican-13.0.1.orig/debian/barbican-common.config.in barbican-13.0.1/debian/barbican-common.config.in
+--- barbican-13.0.1.orig/debian/barbican-common.config.in	2021-04-20 09:59:15.000000000 +0000
++++ barbican-13.0.1/debian/barbican-common.config.in	1970-01-01 00:00:00.000000000 +0000
 @@ -1,17 +0,0 @@
 -#!/bin/sh
 -
@@ -69,18 +69,18 @@ diff -Naurp barbican-11.0.0.orig/debian/barbican-common.config.in barbican-11.0.
 -db_go
 -
 -exit 0
-diff -Naurp barbican-11.0.0.orig/debian/barbican-common.install barbican-11.0.0/debian/barbican-common.install
---- barbican-11.0.0.orig/debian/barbican-common.install	2021-04-20 09:59:15.000000000 +0000
-+++ barbican-11.0.0/debian/barbican-common.install	2021-11-26 17:57:04.417749768 +0000
+diff -Naurp barbican-13.0.1.orig/debian/barbican-common.install barbican-13.0.1/debian/barbican-common.install
+--- barbican-13.0.1.orig/debian/barbican-common.install	2021-04-20 09:59:15.000000000 +0000
++++ barbican-13.0.1/debian/barbican-common.install	2021-11-26 17:57:04.417749768 +0000
 @@ -1,2 +1,5 @@
  bin/barbican-api		/usr/bin
  usr/bin/*
 +etc/barbican/barbican-api-paste.ini etc/barbican
 +etc/barbican/barbican.conf etc/barbican
 +etc/barbican/vassals/barbican-api.ini etc/barbican/vassals
-diff -Naurp barbican-11.0.0.orig/debian/barbican-common.posinst barbican-11.0.0/debian/barbican-common.posinst
---- barbican-11.0.0.orig/debian/barbican-common.posinst	1970-01-01 00:00:00.000000000 +0000
-+++ barbican-11.0.0/debian/barbican-common.posinst	2021-11-26 17:11:12.770838698 +0000
+diff -Naurp barbican-13.0.1.orig/debian/barbican-common.posinst barbican-13.0.1/debian/barbican-common.posinst
+--- barbican-13.0.1.orig/debian/barbican-common.posinst	1970-01-01 00:00:00.000000000 +0000
++++ barbican-13.0.1/debian/barbican-common.posinst	2021-11-26 17:11:12.770838698 +0000
 @@ -0,0 +1,28 @@
 +#!/bin/sh
 +
@@ -110,9 +110,9 @@ diff -Naurp barbican-11.0.0.orig/debian/barbican-common.posinst barbican-11.0.0/
 +#DEBHELPER#
 +
 +exit 0
-diff -Naurp barbican-11.0.0.orig/debian/barbican-common.postinst.in barbican-11.0.0/debian/barbican-common.postinst.in
---- barbican-11.0.0.orig/debian/barbican-common.postinst.in	2021-04-20 09:59:15.000000000 +0000
-+++ barbican-11.0.0/debian/barbican-common.postinst.in	1970-01-01 00:00:00.000000000 +0000
+diff -Naurp barbican-13.0.1.orig/debian/barbican-common.postinst.in barbican-13.0.1/debian/barbican-common.postinst.in
+--- barbican-13.0.1.orig/debian/barbican-common.postinst.in	2021-04-20 09:59:15.000000000 +0000
++++ barbican-13.0.1/debian/barbican-common.postinst.in	1970-01-01 00:00:00.000000000 +0000
 @@ -1,46 +0,0 @@
 -#!/bin/sh
 -
@@ -160,9 +160,9 @@ diff -Naurp barbican-11.0.0.orig/debian/barbican-common.postinst.in barbican-11.
 -#DEBHELPER#
 -
 -exit 0
-diff -Naurp barbican-11.0.0.orig/debian/barbican-common.postrm barbican-11.0.0/debian/barbican-common.postrm
---- barbican-11.0.0.orig/debian/barbican-common.postrm	1970-01-01 00:00:00.000000000 +0000
-+++ barbican-11.0.0/debian/barbican-common.postrm	2021-11-26 17:11:12.774838632 +0000
+diff -Naurp barbican-13.0.1.orig/debian/barbican-common.postrm barbican-13.0.1/debian/barbican-common.postrm
+--- barbican-13.0.1.orig/debian/barbican-common.postrm	1970-01-01 00:00:00.000000000 +0000
++++ barbican-13.0.1/debian/barbican-common.postrm	2021-11-26 17:11:12.774838632 +0000
 @@ -0,0 +1,14 @@
 +#!/bin/sh
 +
@@ -178,9 +178,9 @@ diff -Naurp barbican-11.0.0.orig/debian/barbican-common.postrm barbican-11.0.0/d
 +#DEBHELPER#
 +
 +exit 0
-diff -Naurp barbican-11.0.0.orig/debian/barbican-common.postrm.in barbican-11.0.0/debian/barbican-common.postrm.in
---- barbican-11.0.0.orig/debian/barbican-common.postrm.in	2021-04-20 09:59:15.000000000 +0000
-+++ barbican-11.0.0/debian/barbican-common.postrm.in	1970-01-01 00:00:00.000000000 +0000
+diff -Naurp barbican-13.0.1.orig/debian/barbican-common.postrm.in barbican-13.0.1/debian/barbican-common.postrm.in
+--- barbican-13.0.1.orig/debian/barbican-common.postrm.in	2021-04-20 09:59:15.000000000 +0000
++++ barbican-13.0.1/debian/barbican-common.postrm.in	1970-01-01 00:00:00.000000000 +0000
 @@ -1,25 +0,0 @@
 -#!/bin/sh
 -
@@ -207,9 +207,9 @@ diff -Naurp barbican-11.0.0.orig/debian/barbican-common.postrm.in barbican-11.0.
 -#DEBHELPER#
 -
 -exit 0
-diff -Naurp barbican-11.0.0.orig/debian/control barbican-11.0.0/debian/control
---- barbican-11.0.0.orig/debian/control	2021-04-20 09:59:15.000000000 +0000
-+++ barbican-11.0.0/debian/control	2021-11-26 17:11:12.774838632 +0000
+diff -Naurp barbican-13.0.1.orig/debian/control barbican-13.0.1/debian/control
+--- barbican-13.0.1.orig/debian/control	2021-04-20 09:59:15.000000000 +0000
++++ barbican-13.0.1/debian/control	2021-11-26 17:11:12.774838632 +0000
 @@ -96,7 +96,6 @@ Package: barbican-common
  Architecture: all
  Depends:
@@ -218,15 +218,15 @@ diff -Naurp barbican-11.0.0.orig/debian/control barbican-11.0.0/debian/control
   debconf,
   python3-barbican (= ${binary:Version}),
   ${misc:Depends},
-diff -Naurp barbican-11.0.0.orig/debian/rules barbican-11.0.0/debian/rules
---- barbican-11.0.0.orig/debian/rules	2021-04-20 09:59:15.000000000 +0000
-+++ barbican-11.0.0/debian/rules	2021-11-26 17:56:48.926004150 +0000
+diff -Naurp barbican-13.0.1.orig/debian/rules barbican-13.0.1/debian/rules
+--- barbican-13.0.1.orig/debian/rules   2025-01-09 23:21:13.602619091 -0300
++++ barbican-13.0.1/debian/rules        2025-01-10 10:24:52.593299528 -0300
 @@ -3,22 +3,12 @@
  include /usr/share/openstack-pkg-tools/pkgos.make
  
  %:
--	dh $@ --buildsystem=python_distutils --with python3,systemd,sphinxdoc
-+	dh $@ --buildsystem=pybuild --with python3,systemd,sphinxdoc
+-	dh $@ --buildsystem=python_distutils --with python3,sphinxdoc
++	dh $@ --buildsystem=pybuild --with python3,sphinxdoc
  
  override_dh_auto_clean:
  	rm -f debian/*.init debian/*.service debian/*.upstart
@@ -245,9 +245,9 @@ diff -Naurp barbican-11.0.0.orig/debian/rules barbican-11.0.0/debian/rules
  
  override_dh_auto_test:
  	echo "Do nothing..."
-@@ -35,46 +25,9 @@ ifeq (,$(findstring nocheck, $(DEB_BUILD
- 	pkgos-dh_auto_test --no-py2 'barbican\.tests\.(?!(.*common.test_utils\.WhenTestingAcceptEncodingGetter\.test_get_correct_fullname_for_class.*|.*common\.test_utils\.WhenTestingGenerateFullClassnameForInstance\.test_returns_qualified_name.*|.*plugin\.interface\.test_certificate_manager\.WhenTestingCertificateEventPluginManager\.test_get_plugin_by_name.*|.*plugin\.interface\.test_certificate_manager\.WhenTestingCertificatePluginManager\.test_get_plugin_by_ca_id.*|.*plugin\.interface\.test_certificate_manager\.WhenTestingCertificatePluginManager\.test_get_plugin_by_name.*|.*plugin\.interface\.test_certificate_manager\.WhenTestingCertificatePluginManager\.test_refresh_ca_list.*|.*plugin\.test_kmip\.WhenTestingKMIPSecretStore\.test_delete_secret_assert_called.*|.*plugin\.test_kmip\.WhenTestingKMIPSecretStore\.test_generate_asymmetric_key_assert_called.*|.*plugin\.test_kmip\.WhenTestingKMIPSecretStore\.test_generate_symmetric_key_assert_called.*|.*plugin\.test_kmip\.WhenTestingKMIPSecretStore\.test_get_secret_opaque.*|.*plugin\.test_kmip\.WhenTestingKMIPSecretStore\.test_get_secret_private_key.*|.*plugin\.test_kmip\.WhenTestingKMIPSecretStore\.test_get_secret_public_key.*|.*plugin\.test_kmip\.WhenTestingKMIPSecretStore\.test_get_secret_symmetric.*|.*plugin\.test_kmip\.WhenTestingKMIPSecretStore\.test_store_private_key_secret_assert_called.*|.*plugin\.test_kmip\.WhenTestingKMIPSecretStore\.test_store_symmetric_secret_assert_called.*|.*tasks\.test_keystone_consumer\.WhenUsingKeystoneEventConsumerProcessMethod\.test_existing_project_entities_cleanup_for_plain_secret.*|.*plugin\.test_kmip\.WhenTestingKMIPSecretStore\.test_credential.*|.*test_hacking\.HackingTestCase\.test_logging_with_tuple_argument.*|.*common\.test_validators\.WhenTestingSecretMetadataValidator\.test_should_validate_all_fields_and_make_key_lowercase.*|.*test_hacking\.HackingTestCase\.test_str_on_exception.*|.*test_hacking\.HackingTestCase\.test_str_on_multiple_exceptions.*|.*test_hacking\.HackingTestCase\.test_str_unicode_on_multiple_exceptions.*|.*test_hacking\.HackingTestCase\.test_unicode_on_exception.*))'
- 
+@@ -34,49 +24,9 @@ override_dh_install:
+ ifeq (,$(findstring nocheck, $(DEB_BUILD_OPTIONS)))
+ 	pkgos-dh_auto_test --no-py2 'barbican\.tests\.(?!(.*common.test_utils\.WhenTestingAcceptEncodingGetter\.test_get_correct_fullname_for_class.*|.*common\.test_utils\.WhenTestingGenerateFullClassnameForInstance\.test_returns_qualified_name.*|.*plugin\.interface\.test_certificate_manager\.WhenTestingCertificateEventPluginManager\.test_get_plugin_by_name.*|.*plugin\.interface\.test_certificate_manager\.WhenTestingCertificatePluginManager\.test_get_plugin_by_ca_id.*|.*plugin\.interface\.test_certificate_manager\.WhenTestingCertificatePluginManager\.test_get_plugin_by_name.*|.*plugin\.interface\.test_certificate_manager\.WhenTestingCertificatePluginManager\.test_refresh_ca_list.*|.*plugin\.test_kmip\.WhenTestingKMIPSecretStore\.test_delete_secret_assert_called.*|.*plugin\.test_kmip\.WhenTestingKMIPSecretStore\.test_generate_asymmetric_key_assert_called.*|.*plugin\.test_kmip\.WhenTestingKMIPSecretStore\.test_generate_symmetric_key_assert_called.*|.*plugin\.test_kmip\.WhenTestingKMIPSecretStore\.test_get_secret_opaque.*|.*plugin\.test_kmip\.WhenTestingKMIPSecretStore\.test_get_secret_private_key.*|.*plugin\.test_kmip\.WhenTestingKMIPSecretStore\.test_get_secret_public_key.*|.*plugin\.test_kmip\.WhenTestingKMIPSecretStore\.test_get_secret_symmetric.*|.*plugin\.test_kmip\.WhenTestingKMIPSecretStore\.test_store_private_key_secret_assert_called.*|.*plugin\.test_kmip\.WhenTestingKMIPSecretStore\.test_store_symmetric_secret_assert_called.*|.*tasks\.test_keystone_consumer\.WhenUsingKeystoneEventConsumerProcessMethod\.test_existing_project_entities_cleanup_for_plain_secret.*|.*plugin\.test_kmip\.WhenTestingKMIPSecretStore\.test_credential.*|.*test_hacking\.HackingTestCase\.test_logging_with_tuple_argument.*|.*common\.test_validators\.WhenTestingSecretMetadataValidator\.test_should_validate_all_fields_and_make_key_lowercase.*|.*test_hacking\.HackingTestCase\.test_str_on_exception.*|.*test_hacking\.HackingTestCase\.test_str_on_multiple_exceptions.*|.*test_hacking\.HackingTestCase\.test_str_unicode_on_multiple_exceptions.*|.*test_hacking\.HackingTestCase\.test_unicode_on_exception.*|.*common\.test_validators\.WhenTestingSimpleCMCOrderValidator\.test_should_raise_with_unsigned_pkcs10_data.*))'
  endif
 -
 -	# Generate the barbican.conf config using installed python-barbican files.
@@ -281,6 +281,9 @@ diff -Naurp barbican-11.0.0.orig/debian/rules barbican-11.0.0/debian/rules
 -		--output-file $(CURDIR)/debian/barbican-common/etc/barbican/policy.d/00_default_policy.yaml \
 -		--format yaml \
 -		--namespace barbican
+-
+-	# Comment out deprecated policies, otherwise, the policy doesn't work
+-	sed -i 's/^"/#"/' $(CURDIR)/debian/barbican-common/etc/barbican/policy.d/00_default_policy.yaml
 -
 -	# Use the policy.d folder
 -	pkgos-fix-config-default $(CURDIR)/debian/barbican-common/usr/share/barbican-common/barbican.conf oslo_policy policy_dirs /etc/barbican/policy.d
