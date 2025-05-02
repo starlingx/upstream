@@ -3,10 +3,10 @@ LABEL=stx-platformclients
 PROJECT=infra
 PROJECT_REPO=nil
 DIST_REPOS="OS"
-DIST_PACKAGES="python3-dev libffi-dev libssl-dev libcurl4-openssl-dev libfile-which-perl bash-completion helm kubernetes-1.24.4-client"
+DIST_PACKAGES="python3-dev libffi-dev libssl-dev libcurl4-openssl-dev libfile-which-perl bash-completion helm kubernetes-1.29.2-client"
 PIP_PACKAGES="pycryptodomex httplib2 pyopenssl ndg-httpsclient pyasn1 \
     six prettytable PyYAML python-keystoneclient  python-barbicanclient \
     python-openstackclient cgtsclient fmclient distributedcloud_client \
     osprofiler beautifulsoup4 oidcauthtools mechanize html5lib webencodings \
     nfv-client software-client tsconfig"
-CUSTOMIZATION="ln -s /usr/local/kubernetes/1.24.4/stage2/usr/bin/kubectl /usr/bin/"
+CUSTOMIZATION="ln -s /usr/local/kubernetes/1.29.2/stage1/usr/bin/kubectl /usr/bin/"
