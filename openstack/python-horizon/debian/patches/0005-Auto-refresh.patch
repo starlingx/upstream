@@ -390,8 +390,8 @@ index 000000000..7976c0d14
 +/* Functionality related to detail panes */
 +horizon.details = {
 +    refresh: function(html) {
-+        var $new_details = $(html).find('.detail > dl').parent();
-+        var $old_details = $('.detail > dl').parent();
++        var $new_details = $(html).find('.detail dl').parent();
++        var $old_details = $('.detail dl').parent();
 +        var $new_title = $(html).find('.detail > dl > .word-wrap:first').text();
 +        var $old_title = $('.detail-header > div > div > span');
 +
@@ -414,7 +414,7 @@ index 000000000..7976c0d14
 +};
 +
 +horizon.addInitFunction(function() {
-+  if ($('.detail > dl').length > 0) {
++  if ($('.detail dl').length > 0) {
 +      // Register callback handler to update the detail panels on page refresh
 +      horizon.refresh.addRefreshFunction(horizon.details.refresh);
 +  }
