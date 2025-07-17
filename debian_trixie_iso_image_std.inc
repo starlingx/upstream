@@ -1,12 +1,12 @@
 # List of packages to be included/installed in ISO
 
 #barbican
-#barbican-api
-#barbican-common
-#barbican-doc
-#barbican-keystone-listener
-#barbican-worker
-#python3-barbican
+barbican-api
+barbican-common
+barbican-doc
+barbican-keystone-listener
+barbican-worker
+python3-barbican
 
 #keystone
 #keystone-doc
