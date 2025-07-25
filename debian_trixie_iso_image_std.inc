@@ -29,8 +29,8 @@ python3-barbicanclient
 python3-keystoneauth1
 
 #python-openstackclient
-#python-openstackclient-doc
-#python3-openstackclient
+python-openstackclient-doc
+python3-openstackclient
 
 #python-osc-lib
 python-osc-lib-doc
