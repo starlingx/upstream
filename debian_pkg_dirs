@@ -9,6 +9,5 @@ openstack/python-keystoneauth1
 openstack/python-openstackclient
 openstack/python-osc-lib
 openstack/python-oslo-messaging
-openstack/python-pankoclient
 openstack/python-wsme
 openstack/rabbitmq-server

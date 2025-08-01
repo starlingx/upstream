@@ -39,10 +39,6 @@ python3-osc-lib
 #python-oslo-messaging
 python3-oslo.messaging
 
-#python-pankoclient
-python-pankoclient-doc
-python3-pankoclient
-
 #python-wsme
 python3-wsme
 
