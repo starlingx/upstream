@@ -1,10 +1,10 @@
 ---
 debname: python-oslo.messaging
-debver: 12.5.2-1
+debver: 16.1.0-3
 dl_path:
-  name: python-oslo.messaging-debian-12.5.2-1.tar.gz
-  url: https://salsa.debian.org/openstack-team/oslo/python-oslo.messaging/-/archive/debian/12.5.2-1/python-oslo.messaging-debian-12.5.2-1.tar.gz
-  md5sum: 7e2835c989b5d148288fc713d8c8735d
+  name: python-oslo.messaging-debian-16.1.0-3.tar.gz
+  url: https://salsa.debian.org/openstack-team/oslo/python-oslo.messaging/-/archive/debian/16.1.0-3/python-oslo.messaging-debian-16.1.0-3.tar.gz
+  sha256sum: a82f5a02ea63941b0c8b9a59c775453c020c1288765dc74aa07607b3c26a5094
 revision:
   dist: $STX_DIST
   GITREVCOUNT:

@@ -1,4 +1,4 @@
-From 43f4d70ad206aa1e6b8a1f7fd814dae8de515296 Mon Sep 17 00:00:00 2001
+From baf3a774bb85861e9fdf9a3404546a60aa786d0d Mon Sep 17 00:00:00 2001
 From: Fabricio Henrique Ramos <fabriciohenrique.ramos@windriver.com>
 Date: Mon, 4 Oct 2021 11:36:08 -0300
 Subject: [PATCH] rabbit: increase heartbeat rate to decrease poll interval
@@ -18,18 +18,18 @@ reducing the interval by controlling the rate.
  1 file changed, 1 insertion(+), 1 deletion(-)
 
 diff --git a/oslo_messaging/_drivers/impl_rabbit.py b/oslo_messaging/_drivers/impl_rabbit.py
-index 45a49645..bda6f0f9 100644
+index 1efa5da..58fd15d 100644
 --- a/oslo_messaging/_drivers/impl_rabbit.py
 +++ b/oslo_messaging/_drivers/impl_rabbit.py
-@@ -164,7 +164,7 @@ rabbit_opts = [
+@@ -240,7 +240,7 @@ rabbit_opts = [
                 "considered down if heartbeat's keep-alive fails "
                 "(0 disables heartbeat)."),
      cfg.IntOpt('heartbeat_rate',
--               default=2,
+-               default=3,
 +               default=10,
                 help='How often times during the heartbeat_timeout_threshold '
                 'we check the heartbeat.'),
      cfg.BoolOpt('direct_mandatory_flag',
 -- 
-2.17.1
+2.34.1
 

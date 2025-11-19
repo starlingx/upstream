@@ -37,7 +37,7 @@
 #python3-osc-lib
 
 #python-oslo-messaging
-#python3-oslo.messaging
+python3-oslo.messaging
 
 #python-wsme
 #python3-wsme

@@ -8,6 +8,6 @@ openstack/openstack-pkg-tools
 #openstack/python-keystoneauth1
 #openstack/python-openstackclient
 #openstack/python-osc-lib
-#openstack/python-oslo-messaging
+openstack/python-oslo-messaging
 #openstack/python-wsme
 #openstack/rabbitmq-server
