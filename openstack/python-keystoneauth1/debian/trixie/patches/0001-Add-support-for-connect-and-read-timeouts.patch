@@ -1,0 +1,30 @@
+From f9a992832e96e772cef7605b8879cd1569444cf0 Mon Sep 17 00:00:00 2001
+From: Rei Oliveira <Reinildes.JoseMateusOliveira@windriver.com>
+Date: Mon, 17 Jun 2024 16:57:46 -0300
+Subject: [PATCH] Allow the setting of connection timeout and read timeouts
+
+Allow the setting of connection timeout and read timeouts
+
+Signed-off-by: Rei Oliveira <Reinildes.JoseMateusOliveira@windriver.com>
+---
+ keystoneauth1/session.py | 5 ++++-
+ 1 file changed, 4 insertions(+), 1 deletion(-)
+
+diff --git a/keystoneauth1/session.py b/keystoneauth1/session.py
+index f4c400c..d7240ce 100644
+--- a/keystoneauth1/session.py
++++ b/keystoneauth1/session.py
+@@ -380,7 +380,10 @@ class Session(object):
+         self._rate_semaphore = rate_semaphore or NoOpSemaphore()
+
+         if timeout is not None:
+-            self.timeout = float(timeout)
++            if isinstance(timeout, tuple):
++                self.timeout = (float(timeout[0]), float(timeout[1]))
++            else:
++                self.timeout = float(timeout)
+
+         if user_agent is not None:
+             self.user_agent = "%s %s" % (user_agent, DEFAULT_USER_AGENT)
+--
+2.34.1
