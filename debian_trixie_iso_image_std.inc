@@ -14,7 +14,7 @@
 #python3-keystone
 
 #python-barbicanclient
-#python3-barbicanclient
+python3-barbicanclient
 
 #python-horizon
 #horizon-doc

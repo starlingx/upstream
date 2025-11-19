@@ -1,10 +1,10 @@
 ---
 debname: python-barbicanclient
-debver: 5.0.1-2
+debver: 7.1.0-3
 dl_path:
-  name: python-barbicanclient-debian-5.0.1-2.tar.gz
-  url: https://salsa.debian.org/openstack-team/clients/python-barbicanclient/-/archive/debian/5.0.1-2/python-barbicanclient-debian-5.0.1-2.tar.gz
-  md5sum: 80fe9db068b5ca8638f1ed63dbff7327
+  name: python-barbicanclient-debian-7.1.0-3.tar.gz
+  url: https://salsa.debian.org/openstack-team/clients/python-barbicanclient/-/archive/debian/7.1.0-3/python-barbicanclient-debian-7.1.0-3.tar.gz
+  sha256sum: 3dfc901d3babb4eb00b181879e2a555d983eb85c811aca54c230632c47f02d5d
 revision:
   dist: $STX_DIST
   GITREVCOUNT:
