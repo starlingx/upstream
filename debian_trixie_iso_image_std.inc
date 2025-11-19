@@ -26,7 +26,7 @@
 #python-keystoneclient-doc
 #python3-keystoneclient
 
-#python3-keystoneauth1
+python3-keystoneauth1
 
 #python-openstackclient
 #python-openstackclient-doc
