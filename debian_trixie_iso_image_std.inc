@@ -33,8 +33,8 @@ python3-keystoneauth1
 #python3-openstackclient
 
 #python-osc-lib
-#python-osc-lib-doc
-#python3-osc-lib
+python-osc-lib-doc
+python3-osc-lib
 
 #python-oslo-messaging
 python3-oslo.messaging
