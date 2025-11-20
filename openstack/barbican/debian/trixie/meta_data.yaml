@@ -1,0 +1,9 @@
+---
+debname: barbican
+debver: 13.0.0-1
+archive: https://snapshot.debian.org/archive/debian/20211201T030112Z/pool/main/b/barbican/
+revision:
+  dist: $STX_DIST
+  GITREVCOUNT:
+    BASE_SRCREV: e058817453d5e74b23daa1c3b59f4c534047105b
+    SRC_DIR: ${MY_REPO}/stx/upstream/openstack/barbican
