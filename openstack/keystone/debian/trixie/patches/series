@@ -1,0 +1,3 @@
+0001-Support-storing-users-in-keyring.patch
+0002-change-group-perm-to-keyring-dir.patch
+0003-Improving-delete-error-message-for-keystone-user-acc.patch
