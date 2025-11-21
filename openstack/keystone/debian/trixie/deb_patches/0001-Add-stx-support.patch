@@ -1,7 +1,7 @@
-From 6f55cd9922280ee5f4d119aa4a9924a51dea8068 Mon Sep 17 00:00:00 2001
+From f1ffa8dd8430a5aacea56d13a6e61cc0a8bdfcd6 Mon Sep 17 00:00:00 2001
 From: Charles Short <charles.short@windriver.com>
 Date: Tue, 15 Feb 2022 15:59:20 +0000
-Subject: [PATCH] Add stx support
+Subject: [PATCH 1/4] Add stx support
 
 Apply Centos 7 patches to the debian packaging.
 
@@ -14,12 +14,12 @@ Signed-off-by: Charles Short <charles.short@windriver.com>
  debian/keystone.postinst.in                   |  10 +-
  debian/python3-keystone.install               |   1 +
  debian/rules                                  |   6 +
- debian/stx/keystone-all                       | 156 ++++++++++++++++++
+ debian/stx/keystone-all                       | 159 ++++++++++++++++++
  debian/stx/keystone-fernet-keys-rotate-active |  64 +++++++
  debian/stx/keystone.service                   |  14 ++
  debian/stx/password-rules.conf                |  34 ++++
  debian/stx/public.py                          |  21 +++
- 12 files changed, 304 insertions(+), 17 deletions(-)
+ 12 files changed, 307 insertions(+), 17 deletions(-)
  delete mode 100644 debian/keystone.logrotate
  create mode 100644 debian/stx/keystone-all
  create mode 100644 debian/stx/keystone-fernet-keys-rotate-active
@@ -28,20 +28,20 @@ Signed-off-by: Charles Short <charles.short@windriver.com>
  create mode 100644 debian/stx/public.py
 
 diff --git a/debian/control b/debian/control
-index 9d0a3a41f..9a67234fa 100644
+index b7433da..7f74f8c 100644
 --- a/debian/control
 +++ b/debian/control
 @@ -31,6 +31,8 @@ Build-Depends-Indep:
   python3-jwt,
   python3-keystoneclient,
-  python3-keystonemiddleware (>= 7.0.0),
+  python3-keystonemiddleware,
 + python3-keyring,
 + python3-keyrings.alt,
   python3-ldap,
   python3-ldappool,
-  python3-lxml (>= 4.5.0),
+  python3-lxml,
 diff --git a/debian/keystone.dirs b/debian/keystone.dirs
-index a4b3a9e86..6c6e31faf 100644
+index a4b3a9e..6c6e31f 100644
 --- a/debian/keystone.dirs
 +++ b/debian/keystone.dirs
 @@ -2,3 +2,4 @@
@@ -50,20 +50,20 @@ index a4b3a9e86..6c6e31faf 100644
  /var/log/keystone
 +usr/share/keystone
 diff --git a/debian/keystone.install b/debian/keystone.install
-index c0d62c45b..8d68859c0 100644
+index f38937a..e045c6b 100644
 --- a/debian/keystone.install
 +++ b/debian/keystone.install
 @@ -1,3 +1,7 @@
  debian/keystone-uwsgi.ini	/etc/keystone
- etc/default_catalog.templates	/etc/keystone
  etc/logging.conf.sample	/usr/share/doc/keystone
+ etc/sso_callback_template.html	/etc/keystone
 +debian/stx/keystone-fernet-keys-rotate-active usr/bin
 +debian/stx/password-rules.conf /etc/keystone
 +debian/stx/keystone.service lib/systemd/system
 +debian/stx/keystone-all usr/bin
 diff --git a/debian/keystone.logrotate b/debian/keystone.logrotate
 deleted file mode 100644
-index 2709c72aa..000000000
+index 2709c72..0000000
 --- a/debian/keystone.logrotate
 +++ /dev/null
 @@ -1,8 +0,0 @@
@@ -77,10 +77,10 @@ index 2709c72aa..000000000
 -}
 \ No newline at end of file
 diff --git a/debian/keystone.postinst.in b/debian/keystone.postinst.in
-index 207cbc22e..4b464a236 100755
+index e47a5e6..61ff530 100755
 --- a/debian/keystone.postinst.in
 +++ b/debian/keystone.postinst.in
-@@ -170,15 +170,7 @@ if [ "$1" = "configure" ] ; then
+@@ -174,15 +174,7 @@ if [ "$1" = "configure" ] ; then
  		su keystone -s /bin/sh -c 'keystone-manage credential_setup --keystone-user keystone --keystone-group keystone'
  	fi
  
@@ -98,7 +98,7 @@ index 207cbc22e..4b464a236 100755
  	db_get keystone/create-admin-tenant
  	if [ "$RET" = "true" ] ; then
 diff --git a/debian/python3-keystone.install b/debian/python3-keystone.install
-index 44d7fcb64..3c76ffb99 100644
+index 44d7fcb..3c76ffb 100644
 --- a/debian/python3-keystone.install
 +++ b/debian/python3-keystone.install
 @@ -1,2 +1,3 @@
@@ -106,10 +106,10 @@ index 44d7fcb64..3c76ffb99 100644
  usr/lib/python3/*
 +debian/stx/public.py usr/share/keystone
 diff --git a/debian/rules b/debian/rules
-index 3744142f9..f827d1b68 100755
+index e189b7c..e8d5c6b 100755
 --- a/debian/rules
 +++ b/debian/rules
-@@ -106,6 +106,12 @@ ifeq (,$(findstring nodocs, $(DEB_BUILD_OPTIONS)))
+@@ -122,6 +122,12 @@ ifeq (,$(findstring nodoc, $(DEB_BUILD_OPTIONS)))
  	dh_installman
  endif
  
@@ -124,7 +124,7 @@ index 3744142f9..f827d1b68 100755
  
 diff --git a/debian/stx/keystone-all b/debian/stx/keystone-all
 new file mode 100644
-index 000000000..de339caa6
+index 0000000..8972a6c
 --- /dev/null
 +++ b/debian/stx/keystone-all
 @@ -0,0 +1,159 @@
@@ -289,7 +289,7 @@ index 000000000..de339caa6
 +exit $RETVAL
 diff --git a/debian/stx/keystone-fernet-keys-rotate-active b/debian/stx/keystone-fernet-keys-rotate-active
 new file mode 100644
-index 000000000..e2124eee3
+index 0000000..e2124ee
 --- /dev/null
 +++ b/debian/stx/keystone-fernet-keys-rotate-active
 @@ -0,0 +1,64 @@
@@ -359,7 +359,7 @@ index 000000000..e2124eee3
 +
 diff --git a/debian/stx/keystone.service b/debian/stx/keystone.service
 new file mode 100644
-index 000000000..a72aa84be
+index 0000000..a72aa84
 --- /dev/null
 +++ b/debian/stx/keystone.service
 @@ -0,0 +1,14 @@
@@ -379,7 +379,7 @@ index 000000000..a72aa84be
 +WantedBy=multi-user.target
 diff --git a/debian/stx/password-rules.conf b/debian/stx/password-rules.conf
 new file mode 100644
-index 000000000..e7ce65602
+index 0000000..e7ce656
 --- /dev/null
 +++ b/debian/stx/password-rules.conf
 @@ -0,0 +1,34 @@
@@ -419,7 +419,7 @@ index 000000000..e7ce65602
 +password_regex_description = Password must have a minimum length of 7 characters, and must contain at least 1 upper case, 1 lower case, 1 digit, and 1 special character
 diff --git a/debian/stx/public.py b/debian/stx/public.py
 new file mode 100644
-index 000000000..d3a29f3b3
+index 0000000..d3a29f3
 --- /dev/null
 +++ b/debian/stx/public.py
 @@ -0,0 +1,21 @@

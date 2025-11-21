@@ -1,5 +1,5 @@
 openstack/barbican
-#openstack/keystone
+openstack/keystone
 openstack/openstack-pkg-tools
 #openstack/openstack-ras
 openstack/python-barbicanclient

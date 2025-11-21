@@ -1,7 +1,8 @@
-From 8b4b253c3b8af044acb423bfb99824e6d22ad654 Mon Sep 17 00:00:00 2001
+From 19fa47af7da3d5d79e654c1c63905ed8193169e5 Mon Sep 17 00:00:00 2001
 From: Alyson Deives Pereira <alyson.deivespereira@windriver.com>
 Date: Wed, 30 Apr 2025 12:13:27 -0300
-Subject: [PATCH] Launch keystone with systemd-run instead of start-stop-daemon
+Subject: [PATCH 4/4] Launch keystone with systemd-run instead of
+ start-stop-daemon
 
 Change keystone to be launched by sm.service using systemd-run instead
 of start-stop-daemon. This will enable keystone to be launched as a
@@ -20,7 +21,7 @@ Signed-off-by: Alyson Deives Pereira <alyson.deivespereira@windriver.com>
  1 file changed, 12 insertions(+), 11 deletions(-)
 
 diff --git a/debian/stx/keystone-all b/debian/stx/keystone-all
-index 8972a6ce7..1f69991e2 100644
+index 8972a6c..1f69991 100644
 --- a/debian/stx/keystone-all
 +++ b/debian/stx/keystone-all
 @@ -1,5 +1,5 @@
@@ -32,18 +33,18 @@ index 8972a6ce7..1f69991e2 100644
  #
 @@ -19,6 +19,9 @@ RETVAL=0
  #public 5000
-
+ 
  DESC_PUBLIC="openstack-keystone"
 +SERVICE="$DESC_PUBLIC.service"
 +SERVICE_CPUSHARES=512
 +SERVICE_DESC="OpenStack Keystone"
-
+ 
  PIDFILE_PUBLIC="/var/run/$DESC_PUBLIC.pid"
-
+ 
 @@ -90,8 +93,10 @@ start()
-
+ 
      echo -e "Starting keystone process at port 5000 \n" ;
-
+ 
 -    start-stop-daemon --start --quiet --background --pidfile ${PIDFILE_PUBLIC} \
 -        --make-pidfile --exec ${PYTHON} -- ${EXEC} --bind ${BIND_PUBLIC} \
 +    systemd-run --collect --unit=$SERVICE --slice-inherit \
@@ -63,7 +64,7 @@ index 8972a6ce7..1f69991e2 100644
  	    if [ $RETVAL_PUBLIC -eq 0 ]; then
          	echo "Stopped $DESC_PUBLIC."
 @@ -124,13 +129,9 @@ stop()
-
+ 
  status()
  {
 -    pid_public=`cat $PIDFILE_PUBLIC 2>/dev/null`
@@ -77,8 +78,8 @@ index 8972a6ce7..1f69991e2 100644
 +    echo -e "\033[32m $DESC_PUBLIC  is running..\033[0m" || \
 +    echo -e "\033[31m $DESC_PUBLIC  is not running..\033[0m"
  }
-
-
---
+ 
+ 
+-- 
 2.34.1
 

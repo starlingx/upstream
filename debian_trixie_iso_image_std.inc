@@ -9,9 +9,9 @@ barbican-worker
 python3-barbican
 
 #keystone
-#keystone-doc
-#keystone
-#python3-keystone
+keystone-doc
+keystone
+python3-keystone
 
 #python-barbicanclient
 python3-barbicanclient

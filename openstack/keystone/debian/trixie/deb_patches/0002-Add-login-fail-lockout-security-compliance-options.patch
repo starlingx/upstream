@@ -1,7 +1,7 @@
-From 8cf5b37f70ade287cb5eaea7dd48d1eeb1ae737d Mon Sep 17 00:00:00 2001
+From 907b30677adc74adff80f07e5488e17127b9b042 Mon Sep 17 00:00:00 2001
 From: Andy Ning <andy.ning@windriver.com>
 Date: Mon, 14 Mar 2022 10:35:39 -0400
-Subject: [PATCH] Add login fail lockout security compliance options
+Subject: [PATCH 2/4] Add login fail lockout security compliance options
 
 Added two login fail lockout security compliance options:
 lockout_duration
@@ -40,5 +40,5 @@ index e7ce656..ac18ef9 100644
 +# Minimum value: 1
 +lockout_failure_attempts=5
 -- 
-2.25.1
+2.34.1
 

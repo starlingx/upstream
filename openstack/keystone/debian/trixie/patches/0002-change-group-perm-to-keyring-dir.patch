@@ -1,7 +1,8 @@
-From b2a70f1e73a4d6bd67603c3c289ce7d44ee31f77 Mon Sep 17 00:00:00 2001
+From 211c397c1c0edba84841de3309495d15cbb1bb62 Mon Sep 17 00:00:00 2001
 From: Carmen Rata <carmen.rata@windriver.com>
 Date: Wed, 18 Oct 2023 03:01:22 +0000
-Subject: [PATCH] Change keyring directory group ownership to 'sys_protected'
+Subject: [PATCH 2/3] Change keyring directory group ownership to
+ 'sys_protected'
 
 This patch changes the group ownership for "/opt/platform/.keyring"
 directory, and its subdirectories and files, from "root" to
@@ -13,10 +14,10 @@ Signed-off-by: Carmen Rata <carmen.rata@windriver.com>
  1 file changed, 12 insertions(+)
 
 diff --git a/keystone/identity/core.py b/keystone/identity/core.py
-index 31d6cd6..249fe99 100644
+index edba89d..b9f502b 100644
 --- a/keystone/identity/core.py
 +++ b/keystone/identity/core.py
-@@ -56,6 +56,7 @@ MEMOIZE_ID_MAPPING = cache.get_memoization_decorator(group='identity',
+@@ -57,6 +57,7 @@ MEMOIZE_ID_MAPPING = cache.get_memoization_decorator(
  DOMAIN_CONF_FHEAD = 'keystone.'
  DOMAIN_CONF_FTAIL = '.conf'
  KEYRING_CGCS_SERVICE = "CGCS"
@@ -24,7 +25,7 @@ index 31d6cd6..249fe99 100644
  
  # The number of times we will attempt to register a domain to use the SQL
  # driver, if we find that another process is in the middle of registering or
-@@ -1147,6 +1148,17 @@ class Manager(manager.Manager):
+@@ -1326,6 +1327,17 @@ class Manager(manager.Manager):
                  if (user['name'] == 'admin'):
                      raise exception.WRSForbiddenAction(msg % user['name'])
  

@@ -1,39 +1,40 @@
-From 1b735107e80cde5b2b22ce1fedb2e329961c6459 Mon Sep 17 00:00:00 2001
+From e0541ae0b37333d1f48c495f3df61e84a7f5a5a2 Mon Sep 17 00:00:00 2001
 From: Rahul Roshan Kachchap <rahulroshan.kachchap@windriver.com>
 Date: Fri, 4 Oct 2024 04:00:07 -0400
-Subject: [PATCH] Improving delete error message for keystone user accounts
+Subject: [PATCH 3/3] Improving delete error message for keystone user accounts
 
 Signed-off-by: Rahul Roshan Kachchap <rahulroshan.kachchap@windriver.com>
 ---
- keystone/exception.py | 10 ++++++----
- 1 file changed, 6 insertions(+), 4 deletions(-)
+ keystone/exception.py | 9 ++++++---
+ 1 file changed, 6 insertions(+), 3 deletions(-)
 
 diff --git a/keystone/exception.py b/keystone/exception.py
-index c62338b89..cacf1586b 100644
+index d7ccd84..84fdb36 100644
 --- a/keystone/exception.py
 +++ b/keystone/exception.py
-@@ -350,15 +350,17 @@ class AdditionalAuthRequired(AuthPluginException):
- 
+@@ -392,7 +392,9 @@ class AdditionalAuthRequired(AuthPluginException):
  
  class Forbidden(SecurityError):
--    message_format = _("You are not authorized to perform the"
--                       " requested action.")
-+    message_format = _("You are forbidden to perform the requested action. "
-+                       "This action is system-critical and cannot be executed- %(action)s. "
-+                       "Please contact your administrator for further assistance.")
+     message_format = _(
+-        "You are not authorized to perform the requested action."
++        "You are forbidden to perform the requested action. "
++        "This action is system-critical and cannot be executed- %(action)s. "
++        "Please contact your administrator for further assistance."
+     )
      code = int(http.client.FORBIDDEN)
      title = http.client.responses[http.client.FORBIDDEN]
- 
+@@ -400,8 +402,9 @@ class Forbidden(SecurityError):
  
  class ForbiddenAction(Forbidden):
--    message_format = _("You are not authorized to perform the"
--                       " requested action: %(action)s.")
-+    message_format = _("You are forbidden to perform the requested action. "
-+                       "This action is system-critical and cannot be executed- %(action)s. "
-+                       "Please contact your administrator for further assistance.")
+     message_format = _(
+-        "You are not authorized to perform the"
+-        " requested action: %(action)s."
++        "You are forbidden to perform the requested action. "
++        "This action is system-critical and cannot be executed- %(action)s. "
++        "Please contact your administrator for further assistance."
+     )
  
  
- class CrossBackendNotAllowed(Forbidden):
 -- 
-2.25.1
+2.34.1
 
