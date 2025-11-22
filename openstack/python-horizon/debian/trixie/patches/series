@@ -1,0 +1,5 @@
+0001-Use-policy_rules-for-user-role-assignment-and-group-tabs.patch
+0002-Fix-incomplete-pop-up-message-on-delete-Action.patch
+0003-List-default-Address-pools-row-actions-as-disabled.patch
+0004-Improving-delete-error-message-for-keystone-user-acc.patch
+0005-Auto-refresh.patch
