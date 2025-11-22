@@ -1,10 +1,7 @@
 ---
 debname: python-wsme
-debver: 0.10.0-3
-dl_path:
-  name: python-wsme-debian-0.10.0-3.tar.gz
-  url: https://salsa.debian.org/openstack-team/python/python-wsme/-/archive/debian/0.10.0-3/python-wsme-debian-0.10.0-3.tar.gz
-  md5sum: 3c859550514ccde770f371a02f8fdf22
+debver: 0.12.1-6
+archive: https://snapshot.debian.org/archive/debian/20251130T202713Z/pool/main/p/python-wsme/
 revision:
   dist: $STX_DIST
   GITREVCOUNT:

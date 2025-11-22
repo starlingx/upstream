@@ -40,7 +40,7 @@ python3-osc-lib
 python3-oslo.messaging
 
 #python-wsme
-#python3-wsme
+python3-wsme
 
 #rabbitmq-server
 #rabbitmq-server
