@@ -17,10 +17,10 @@ python3-barbican
 python3-barbicanclient
 
 #python-horizon
-#horizon-doc
-#openstack-dashboard-apache
-#openstack-dashboard
-#python3-django-horizon
+horizon-doc
+openstack-dashboard-apache
+openstack-dashboard
+python3-django-horizon
 
 #python-keystoneclient
 #python-keystoneclient-doc
