@@ -43,4 +43,4 @@ python3-oslo.messaging
 python3-wsme
 
 #rabbitmq-server
-#rabbitmq-server
+rabbitmq-server

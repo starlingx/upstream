@@ -10,4 +10,4 @@ openstack/python-openstackclient
 openstack/python-osc-lib
 openstack/python-oslo-messaging
 openstack/python-wsme
-#openstack/rabbitmq-server
+openstack/rabbitmq-server
