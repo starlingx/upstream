@@ -2,7 +2,7 @@
 #openstack/keystone
 openstack/openstack-pkg-tools
 #openstack/openstack-ras
-#openstack/python-barbicanclient
+openstack/python-barbicanclient
 #openstack/python-horizon
 #openstack/python-keystoneclient
 #openstack/python-keystoneauth1
