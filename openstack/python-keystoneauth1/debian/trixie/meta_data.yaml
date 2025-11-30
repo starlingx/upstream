@@ -1,0 +1,12 @@
+---
+debname: python-keystoneauth1
+debver: 4.2.1-2
+dl_path:
+  name: python-keystoneauth1-debian-4.2.1-2.tar.gz
+  url: https://salsa.debian.org/openstack-team/libs/python-keystoneauth1/-/archive/debian/4.2.1-2/python-keystoneauth1-debian-4.2.1-2.tar.gz
+  sha256sum: edb9c128d5f76883caaec7c6d1783199cba6b3bb207af6c80b962596abb5e8d1
+revision:
+  dist: $STX_DIST
+  GITREVCOUNT:
+    BASE_SRCREV: 000011c85e18aa366805332be0625f22d3f8374a
+    SRC_DIR: ${MY_REPO}/stx/upstream/openstack/python-keystoneauth1
