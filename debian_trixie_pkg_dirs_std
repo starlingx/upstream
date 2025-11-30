@@ -5,7 +5,7 @@ openstack/openstack-pkg-tools
 openstack/python-barbicanclient
 #openstack/python-horizon
 #openstack/python-keystoneclient
-#openstack/python-keystoneauth1
+openstack/python-keystoneauth1
 #openstack/python-openstackclient
 #openstack/python-osc-lib
 openstack/python-oslo-messaging

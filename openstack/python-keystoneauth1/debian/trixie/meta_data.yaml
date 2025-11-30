@@ -1,10 +1,10 @@
 ---
 debname: python-keystoneauth1
-debver: 4.2.1-2
+debver: 5.10.0-2
 dl_path:
-  name: python-keystoneauth1-debian-4.2.1-2.tar.gz
-  url: https://salsa.debian.org/openstack-team/libs/python-keystoneauth1/-/archive/debian/4.2.1-2/python-keystoneauth1-debian-4.2.1-2.tar.gz
-  sha256sum: edb9c128d5f76883caaec7c6d1783199cba6b3bb207af6c80b962596abb5e8d1
+  name: python-keystoneauth1-debian-5.10.0-2.tar.gz
+  url: https://salsa.debian.org/openstack-team/libs/python-keystoneauth1/-/archive/debian/5.10.0-2/python-keystoneauth1-debian-5.10.0-2.tar.gz
+  sha256sum: e2e44dab15f4c88a03cd7514bdab19d39cb5ba0f45a4b375317c9e5eb358d792
 revision:
   dist: $STX_DIST
   GITREVCOUNT:
