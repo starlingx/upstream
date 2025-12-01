@@ -1,0 +1,74 @@
+From 91c44ed37c3f928321789d7fbc423c1850ae44fa Mon Sep 17 00:00:00 2001
+From: Rahul Roshan Kachchap <rahulroshan.kachchap@windriver.com>
+Date: Fri, 4 Oct 2024 04:15:53 -0400
+Subject: [PATCH] Improving delete error message for keystone user accounts
+
+Signed-off-by: Rahul Roshan Kachchap <rahulroshan.kachchap@windriver.com>
+---
+ horizon/tables/actions.py | 32 ++++++++++++++++++++++++++++----
+ 1 file changed, 28 insertions(+), 4 deletions(-)
+
+diff --git a/horizon/tables/actions.py b/horizon/tables/actions.py
+index 406575d78..9d76c42eb 100644
+--- a/horizon/tables/actions.py
++++ b/horizon/tables/actions.py
+@@ -755,6 +755,7 @@ class BatchAction(Action):
+         action_success = []
+         action_failure = []
+         action_not_allowed = []
++        forbidden_failure = []
+         for datum_id in obj_ids:
+             datum = table.get_object_by_id(datum_id)
+             datum_display = table.get_object_display(datum) or datum_id
+@@ -786,6 +787,12 @@ class BatchAction(Action):
+                     # If an exception is handled, the original exception object
+                     # is stored in ex.wrapped[1].
+                     ex = ex.wrapped[1]
++                if hasattr(ex, 'http_status') and ex.http_status == 403:
++                    forbidden_failure.append(datum_display)
++                    LOG.warning(u'Forbidden to %(name)s: "%(dis)s"', {
++                        'name': self._get_action_name(past=True).lower(),
++                        'dis': datum_display
++                        })
+                 else:
+                     # Handle the exception but silence it since we'll display
+                     # an aggregate error message later. Otherwise we'd get
+@@ -794,14 +801,31 @@ class BatchAction(Action):
+                 action_description = (
+                     self._get_action_name(past=True).lower(), datum_display)
+                 LOG.warning(
+-                    'Action %(action)s Failed for %(reason)s', {
++                    'Action %(action)s Failed. %(reason)s', {
+                         'action': action_description, 'reason': ex})
+ 
++        if forbidden_failure:
++            action_present = self._get_action_name(past=False).lower()
++            action_past = self._get_action_name(past=True).lower().replace("user", "")
++            msg = _('You are forbidden to %(action_present)s: %(objs)s. '
++                    'The selected %(objs)s are system-critical and cannot be %(action_past)s. '
++                    'Please contact your administrator for further assistance.')
++            params = {
++                    "action_present": action_present,
++                    "action_past": action_past,
++                    "objs": functions.lazy_join(", ", forbidden_failure)
++                    }
++            messages.error(request, msg % params)
++
+         success_message_level = getattr(messages, self.default_message_level)
+         if action_not_allowed:
+-            msg = _('You are not allowed to %(action)s: %(objs)s')
+-            params = {"action":
+-                      self._get_action_name(action_not_allowed).lower(),
++            action_present = self._get_action_name(past=False).lower()
++            action_past = self._get_action_name(past=True).lower().replace("user", "")
++            msg = _('You are forbidden to %(action_present)s: %(objs)s. '
++                    'The selected %(objs)s are system-critical and cannot be %(action_past)s. '
++                    'Please contact your administrator for further assistance.')
++            params = {"action_present": action_present,
++                      "action_past": action_past,
+                       "objs": functions.lazy_join(", ", action_not_allowed)}
+             messages.error(request, msg % params)
+             success_message_level = messages.info
+-- 
+2.25.1
+
