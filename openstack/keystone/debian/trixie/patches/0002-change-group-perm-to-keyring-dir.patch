@@ -1,0 +1,47 @@
+From b2a70f1e73a4d6bd67603c3c289ce7d44ee31f77 Mon Sep 17 00:00:00 2001
+From: Carmen Rata <carmen.rata@windriver.com>
+Date: Wed, 18 Oct 2023 03:01:22 +0000
+Subject: [PATCH] Change keyring directory group ownership to 'sys_protected'
+
+This patch changes the group ownership for "/opt/platform/.keyring"
+directory, and its subdirectories and files, from "root" to
+'sys_protected' when keystone password changes for the admin user.
+
+Signed-off-by: Carmen Rata <carmen.rata@windriver.com>
+---
+ keystone/identity/core.py | 12 ++++++++++++
+ 1 file changed, 12 insertions(+)
+
+diff --git a/keystone/identity/core.py b/keystone/identity/core.py
+index 31d6cd6..249fe99 100644
+--- a/keystone/identity/core.py
++++ b/keystone/identity/core.py
+@@ -56,6 +56,7 @@ MEMOIZE_ID_MAPPING = cache.get_memoization_decorator(group='identity',
+ DOMAIN_CONF_FHEAD = 'keystone.'
+ DOMAIN_CONF_FTAIL = '.conf'
+ KEYRING_CGCS_SERVICE = "CGCS"
++KEYRING_DIR_PATH = "/opt/platform/.keyring"
+ 
+ # The number of times we will attempt to register a domain to use the SQL
+ # driver, if we find that another process is in the middle of registering or
+@@ -1147,6 +1148,17 @@ class Manager(manager.Manager):
+                 if (user['name'] == 'admin'):
+                     raise exception.WRSForbiddenAction(msg % user['name'])
+ 
++            # change group ownership to sys_protected for keyring directory
++            if os.path.isdir(KEYRING_DIR_PATH):
++                try:
++                    os.system("chgrp -R sys_protected %s" % KEYRING_DIR_PATH)
++                except OSError as e:
++                    LOG.exception("chgrp for %s OSError=%s failed" %
++                        (KEYRING_DIR_PATH, e))
++            else:
++                LOG.exception("Directory %s does not exist" %
++                    (KEYRING_DIR_PATH))
++
+     def _update_user_with_federated_objects(self, user, driver, entity_id):
+         # If the user did not pass a federated object along inside the user
+         # object then we simply update the user as normal and add the
+-- 
+2.34.1
+
