@@ -1,0 +1,31 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Sai Lakshmi Teja Vanka <SaiLakshmiTeja.Vanka@windriver.com>
+Date: Fri, 10 Apr 2026 03:28:00 -0400
+Subject: [PATCH] Export PROJECT_VERSION to fix version detection
+
+The rabbitmq build system resolves PROJECT_VERSION through a chain:
+Makefile -> rabbitmq-components.mk -> git-revisions.txt/git-describe.
+Some sub-makefiles (e.g. deps/rabbit_common/mk/rabbitmq-components.hexpm.mk)
+run in subdirectories without git-revisions.txt or a git repo, causing
+PROJECT_VERSION to fall back to 0.0.0.
+
+Export PROJECT_VERSION from debian/rules using the version already
+extracted from debian/changelog, so it propagates to all makefiles
+via the environment.
+
+---
+ debian/rules | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/debian/rules b/debian/rules
+index 1234567..abcdefg 100755
+--- a/debian/rules
++++ b/debian/rules
+@@ -4,6 +4,7 @@
+ DEB_DESTDIR=debian/rabbitmq-server
+ VERSION = $(shell dpkg-parsechangelog -SVersion | sed -e 's/^[[:digit:]]*://' -e 's/[-].*//' -e 's/~/.0/' -e 's/+dfsg1//' | head -n 1)
+ 
++export PROJECT_VERSION = $(VERSION)
+ export LC_ALL=en_US.UTF-8
+ export LANG=en_US.UTF-8
+ 

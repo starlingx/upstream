@@ -1,1 +1,2 @@
 0001-WRS-Allow-rabbitmqctl-to-run-as-root-and-set-root-ho.patch
+0002-Export-PROJECT_VERSION-to-fix-version-detection.patch
