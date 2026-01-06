@@ -1,0 +1,49 @@
+From 4d355d95b01d38d7a89bb8d15676f9541a532ef1 Mon Sep 17 00:00:00 2001
+From: Rafael Moyano <rafael.moyano@windriver.com>
+Date: Wed, 9 Aug 2023 18:05:10 -0300
+Subject: [PATCH 9222/9222] List default Address pools row actions as disabled
+
+Default address pools are read-only by design, any attempt to delete
+ or update them will fail. Default address pools row actions dropdown
+ menu has been disabled in order to prevent the unwanted behaviour.
+
+Test Plan:
+PASS: Go to Admin > System Configuration > Address Pools. Create one
+custom Address pool, save changes and wait until the address pools
+list is updated properly.
+PASS: Go to Admin > System Configuration > Address Pools. Select and
+update custom Address pool, save changes and wait until the address
+pools list is updated properly.
+PASS: Go to Admin > System Configuration > Address Pools. Select and
+delete custom Address pool, wait until the address pools list is
+updated properly.
+PASS: Go to Admin > System Configuration > Address Pools. Try to
+update default Address pool, actions is not allowed.
+PASS: Go to Admin > System Configuration > Address Pools. Try to
+delete default Address pool using dropdown option, actions is not
+allowed.
+
+Partial-bug: 2030350
+
+Change-Id: I44f3b16ca483c95334b50ae5976b8330ce62bcde
+Signed-off-by: Rafael Moyano <rafael.moyano@windriver.com>
+---
+ .../horizon/common/_data_table_row_actions_dropdown.html        | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/horizon/templates/horizon/common/_data_table_row_actions_dropdown.html b/horizon/templates/horizon/common/_data_table_row_actions_dropdown.html
+index 9dbd07bcf..b152d1f3d 100644
+--- a/horizon/templates/horizon/common/_data_table_row_actions_dropdown.html
++++ b/horizon/templates/horizon/common/_data_table_row_actions_dropdown.html
+@@ -9,7 +9,7 @@
+       {% for action in row_actions %}
+         {% if forloop.first %}
+           {% include "horizon/common/_data_table_action.html" with is_small=1 is_single=1 %}
+-          <a class="btn btn-default btn-sm dropdown-toggle" data-toggle="dropdown" href="#">
++          <a class="btn btn-default btn-sm dropdown-toggle {% if 'disabled' in action.classes %}disabled{% endif %}" data-toggle="dropdown" href="#">
+             <span class="fa fa-caret-down"></span>
+           </a>
+           <ul class="dropdown-menu dropdown-menu-right row_actions">
+-- 
+2.34.1
+

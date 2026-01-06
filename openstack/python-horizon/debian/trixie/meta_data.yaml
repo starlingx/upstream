@@ -1,0 +1,23 @@
+---
+debname: horizon
+debver: 25.3.0-2
+dl_path:
+  name: horizon-debian-25.3.0-2.tar.gz
+  url: https://salsa.debian.org/openstack-team/services/horizon/-/archive/debian/25.3.0-2/horizon-debian-25.3.0-2.tar.gz
+  md5sum: 1e239dc00f7c98041886a00dfe653ad2
+src_files:
+  - files/guni_config.py
+  - files/horizon-assets-compress
+  - files/horizon-clearsessions
+  - files/horizon.init
+  - files/horizon.logrotate
+  - files/horizon-patching-restart
+  - files/openstack-dashboard-httpd-2.4.conf
+  - files/openstack-dashboard-httpd-logging.conf
+  - files/python-django-horizon-logrotate.conf
+  - files/python-django-horizon-systemd.conf
+revision:
+  dist: $STX_DIST
+  GITREVCOUNT:
+    BASE_SRCREV: 664f9f927b1410c3749455295cb6105fd6e1440b
+    SRC_DIR: ${MY_REPO}/stx/upstream/openstack/python-horizon

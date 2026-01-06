@@ -29,6 +29,9 @@ STATICDIR="/var/www/pages/static"
 BRANDDIR="/opt/branding"
 APPLIEDDIR="/opt/branding/applied"
 TMPUPLOADDIR="/scratch/horizon"
+SERVICE="$DESC.service"
+SERVICE_CPUSHARES=512
+SERVICE_DESC="Openstack Dashboard"
 
 source /usr/bin/tsconfig
 
@@ -64,8 +67,10 @@ start()
 
     echo -n "Starting $DESC..."
 
-    start-stop-daemon --start --quiet --background --pidfile ${PIDFILE} \
-        --make-pidfile --exec ${PYTHON} -- ${EXEC} --preload --bind ${BIND}:${PORT} \
+    systemd-run --collect --unit ${SERVICE} --slice-inherit \
+        -p Description="${SERVICE_DESC}" \
+        -p CPUShares=${SERVICE_CPUSHARES} -p PIDFile=${PIDFILE} \
+        ${EXEC} --pid ${PIDFILE} --preload --bind ${BIND}:${PORT} \
         --worker-class ${WORKER} --workers ${WORKERS} --timeout ${TIMEOUT} \
         --log-syslog  \
         --config '/usr/share/openstack-dashboard/guni_config.py' \
@@ -108,7 +113,7 @@ stop()
 
     echo -n "Stopping $DESC..."
 
-    start-stop-daemon --stop --quiet --pidfile $PIDFILE
+    systemctl stop $SERVICE
     RETVAL=$?
     if [ $RETVAL -eq 0 ]; then
         echo "done."

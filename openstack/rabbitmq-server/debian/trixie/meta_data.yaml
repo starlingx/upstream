@@ -1,0 +1,12 @@
+---
+debname: rabbitmq-server
+debver: 4.0.5-6
+dl_path:
+  name: rabbitmq-server-debian-4.0.5-6.tar.gz
+  url: https://salsa.debian.org/openstack-team/third-party/rabbitmq-server/-/archive/debian/4.0.5-6/rabbitmq-server-debian-4.0.5-6.tar.gz
+  sha256sum: dfdbfdf570423ad2452ce1dd655d8ad6c08cad5b06d1a1a22690f94c4665e49a
+revision:
+  dist: $STX_DIST
+  GITREVCOUNT:
+    BASE_SRCREV: b2e2f6cbd545e247e6ad15d5e0da7d3e14c1b8c2
+    SRC_DIR: ${MY_REPO}/stx/upstream/openstack/rabbitmq-server

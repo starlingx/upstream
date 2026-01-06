@@ -1,0 +1,12 @@
+---
+debname: python-oslo.messaging
+debver: 16.1.0-3
+dl_path:
+  name: python-oslo.messaging-debian-16.1.0-3.tar.gz
+  url: https://salsa.debian.org/openstack-team/oslo/python-oslo.messaging/-/archive/debian/16.1.0-3/python-oslo.messaging-debian-16.1.0-3.tar.gz
+  sha256sum: a82f5a02ea63941b0c8b9a59c775453c020c1288765dc74aa07607b3c26a5094
+revision:
+  dist: $STX_DIST
+  GITREVCOUNT:
+    BASE_SRCREV: ed7ef5eb53e598fb9280cf10c4c5a46b5369606b
+    SRC_DIR: ${MY_REPO}/stx/upstream/openstack/python-oslo-messaging

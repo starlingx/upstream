@@ -1,0 +1,12 @@
+---
+debname: python-osc-lib
+debver: 3.2.0-2
+dl_path:
+  name: python-osc-lib-3.2.0-2.tar.gz
+  url: https://salsa.debian.org/openstack-team/libs/python-osc-lib/-/archive/debian/3.2.0-2/python-osc-lib-debian-3.2.0-2.tar.gz
+  sha256sum: a42d75a6f71d69cf0072210aa58993d0ef50b29ea11787f932b9c1fa68e9cafe
+revision:
+  dist: $STX_DIST
+  GITREVCOUNT:
+    BASE_SRCREV: 5d546e3ceedbd0f5df7f1434427ff2244b3cdf6d
+    SRC_DIR: ${MY_REPO}/stx/upstream/openstack/python-osc-lib

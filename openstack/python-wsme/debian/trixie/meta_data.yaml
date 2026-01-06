@@ -1,0 +1,9 @@
+---
+debname: python-wsme
+debver: 0.12.1-6
+archive: https://snapshot.debian.org/archive/debian/20251130T202713Z/pool/main/p/python-wsme/
+revision:
+  dist: $STX_DIST
+  GITREVCOUNT:
+    BASE_SRCREV: dc537bbe4f66f859716285357374b35902e2df17
+    SRC_DIR: ${MY_REPO}/stx/upstream/openstack/python-wsme
