@@ -3,7 +3,7 @@ LABEL=stx-platformclients
 PROJECT=infra
 PROJECT_REPO=nil
 DIST_REPOS="OS"
-DIST_PACKAGES="python3-dev libffi-dev libssl-dev libcurl4-openssl-dev libfile-which-perl bash-completion vim helm kubernetes-1.29.2-client kubernetes-1.30.6-client kubernetes-1.31.5-client kubernetes-1.32.2-client kubernetes-1.33.0-client"
+DIST_PACKAGES="python3-dev libffi-dev libssl-dev libcurl4-openssl-dev libfile-which-perl bash-completion vim helm kubernetes-1.29.2-client kubernetes-1.30.6-client kubernetes-1.31.5-client kubernetes-1.32.2-client kubernetes-1.33.0-client kubelogin"
 PIP_PACKAGES="pycryptodomex httplib2 pyopenssl ndg-httpsclient pyasn1 \
     six prettytable PyYAML python-keystoneclient  python-barbicanclient \
     python-openstackclient cgtsclient fmclient distributedcloud_client \
@@ -41,6 +41,39 @@ get_client_version() {
     echo "${VERSION} ${SUPPORTED}"
 }
 
+# Function to request k8s apiserver version anonymously
+get_server_version_with_request() {
+    export KUBE_APISERVER_URL
+    KUBE_APISERVER_URL=$(awk '/server:/ {print $2}' ~/.kube/config)
+
+    if [[ -z "${KUBE_APISERVER_URL}" ]]; then
+        warn "Kube-apiserver address not yet configured in kubeconfig."
+        return
+    fi
+
+    local KUBE_APISERVER_VERSION=$(python3 - <<-'PY'
+import requests, os
+try:
+    print(
+        requests.get(
+            os.environ.get("KUBE_APISERVER_URL") + "/version",
+            verify=os.environ.get("OS_CACERT"),
+            timeout=10,
+        ).json()["gitVersion"].lstrip("v")
+    )
+except Exception:
+    pass
+PY
+)
+
+    if [[ -z "${KUBE_APISERVER_VERSION}" ]]; then
+        warn "Kube-apiserver version could not be retrieved."
+        return
+    fi
+
+    echo "${KUBE_APISERVER_VERSION}"
+}
+
 # Function to get the k8s server version
 get_server_version() {
     local VERSION=$(echo "${KUBE_SERVER_VERSION}" || echo "")
@@ -57,8 +90,7 @@ get_server_version() {
     # the k8s server version file was updated more than 30min,
     # get the version from the k8s server version file
     if [[ -z "${VERSION}" || "${TIME_DIFF}" -gt 1800 ]]; then
-        local KUBE_CLIENT_BIN_PATH=$(find "${KUBE_BASE_PATH}${KUBE_CLIENT_VERSION}"/*/usr/bin/ -name "kubectl")
-        VERSION=$(${KUBE_CLIENT_BIN_PATH} version -o json 2>/dev/null | awk '/serverVersion/ {found=1} found && /gitVersion/ {gsub(/.*"v/, ""); gsub(/".*/, ""); print; exit}')
+        VERSION=$(get_server_version_with_request)
         [[ -z "${VERSION}" || ( ! "${VERSION}" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ) ]] && VERSION="${KUBE_CLIENT_VERSION}"
         echo "${VERSION}" > "${KUBE_SERVER_VERSION_FILE}"
     fi
