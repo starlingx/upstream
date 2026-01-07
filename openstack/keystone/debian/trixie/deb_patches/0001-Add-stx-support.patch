@@ -59,7 +59,7 @@ index f38937a..e045c6b 100644
  etc/sso_callback_template.html	/etc/keystone
 +debian/stx/keystone-fernet-keys-rotate-active usr/bin
 +debian/stx/password-rules.conf /etc/keystone
-+debian/stx/keystone.service lib/systemd/system
++debian/stx/keystone.service usr/lib/systemd/system
 +debian/stx/keystone-all usr/bin
 diff --git a/debian/keystone.logrotate b/debian/keystone.logrotate
 deleted file mode 100644
