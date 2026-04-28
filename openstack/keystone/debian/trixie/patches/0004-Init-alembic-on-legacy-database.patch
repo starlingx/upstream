@@ -1,0 +1,68 @@
+From 574c3fa58e2a83a0eb2bb7a03d87200ecda4c788 Mon Sep 17 00:00:00 2001
+From: Marcelo de Castro Loebens <Marcelo.DeCastroLoebens@windriver.com>
+Date: Wed, 22 Apr 2026 11:22:58 -0400
+Subject: [PATCH] Init alembic on legacy database
+
+Handle migration from sqlalchemy-migrate to alembic for legacy Keystone
+databases. When a database is under sqlalchemy-migrate control but not
+yet tracked by alembic, stamp the initial alembic revision so that
+subsequent alembic upgrades can proceed without errors.
+
+The error is:
+Running upgrade  -> 27e647c0fad4, Initial version.
+oslo_db.exception.DBError: (psycopg2.errors.DuplicateTable) relation
+"application_credential" already exists
+
+It happens because the db has no stamp info, so alembic tries to apply the
+first migration, 27e647c0fad4. But the tables targeted by this migration
+are already present, which results in the failure. Adding the stamp lets
+alembic know that the current state already has 27e647c0fad4 applied,
+enabling it to apply the remaining migrations.
+
+Signed-off-by: Marcelo de Castro Loebens <Marcelo.DeCastroLoebens@windriver.com>
+---
+ keystone/common/sql/upgrades.py | 22 ++++++++++++++++++++++
+ 1 file changed, 22 insertions(+)
+
+diff --git a/keystone/common/sql/upgrades.py b/keystone/common/sql/upgrades.py
+index acfb5b7..9394231 100644
+--- a/keystone/common/sql/upgrades.py
++++ b/keystone/common/sql/upgrades.py
+@@ -142,6 +142,22 @@ def get_current_heads():
+     return heads
+ 
+ 
++def _is_database_under_migrate_control(engine):
++    with engine.connect() as conn:
++        return engine.dialect.has_table(conn, 'migrate_version')
++
++
++def _init_alembic_on_legacy_database(engine, config):
++    """Init alembic in an existing environment with sqlalchemy-migrate."""
++    LOG.info(
++        'The database is still under sqlalchemy-migrate control; '
++        'fake applying the initial alembic migration'
++    )
++    with engine.begin() as connection:
++        config.attributes['connection'] = connection
++        alembic_api.stamp(config, ALEMBIC_INIT_VERSION)
++
++
+ def _is_database_under_alembic_control(engine):
+     with engine.connect() as conn:
+         context = alembic_migration.MigrationContext.configure(conn)
+@@ -207,6 +223,12 @@ def _db_sync(branch=None, *, engine=None):
+     )
+     config.set_main_option('sqlalchemy.url', engine_url)
+ 
++    if (
++        not _is_database_under_alembic_control(engine) and
++        _is_database_under_migrate_control(engine)
++    ):
++        _init_alembic_on_legacy_database(engine, config)
++
+     _upgrade_alembic(engine, config, branch)
+ 
+ 
+-- 
+2.34.1
