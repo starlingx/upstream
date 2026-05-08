@@ -1,0 +1,12 @@
+---
+debname: python-openstacksdk
+debver: 4.4.0-5
+dl_path:
+  name: python-openstacksdk-debian-4.4.0-5.tar.gz
+  url: https://salsa.debian.org/openstack-team/libs/python-openstacksdk/-/archive/debian/4.4.0-5/python-openstacksdk-debian-4.4.0-5.tar.gz
+  sha256sum: 771575e42859192b3fa56ef4d17910a2a1dd6ed0fa22b71f55606ca9bcdaac97
+revision:
+  dist: $STX_DIST
+  GITREVCOUNT:
+    BASE_SRCREV: 69d1068e824e9efdbc8aa1c36e7ec5fc6bc194f2
+    SRC_DIR: ${MY_REPO}/stx/upstream/openstack/python-openstacksdk
