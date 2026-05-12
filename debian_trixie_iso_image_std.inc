@@ -32,6 +32,9 @@ python3-keystoneauth1
 python-openstackclient-doc
 python3-openstackclient
 
+#python-openstacksdk
+python3-openstacksdk
+
 #python-osc-lib
 python-osc-lib-doc
 python3-osc-lib
