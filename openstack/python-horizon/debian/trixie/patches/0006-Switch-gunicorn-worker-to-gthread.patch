@@ -1,0 +1,43 @@
+From: Sai Lakshmi Teja Vanka <SaiLakshmiTeja.Vanka@windriver.com>
+Date: Wed, 20 May 2026 10:53:00 -0400
+Subject: Switch gunicorn worker from eventlet to gthread
+
+eventlet 0.40.3 (Trixie) introduced _green_existing_locks() in
+monkey_patch() which triggers a Django lazy import chain during worker
+init. The chain spawns /sbin/ldconfig via ctypes.util.find_library(),
+and the resulting SIGCHLD crashes the eventlet hub with:
+  RuntimeError: do not call blocking functions from the mainloop
+
+Switch from eventlet to gthread workers with 4 threads per worker.
+Horizon code has no dependency on eventlet monkey-patching. gthread
+provides adequate concurrency via native Python threads without the
+eventlet/SIGCHLD interaction.
+
+Signed-off-by: Sai Lakshmi Teja Vanka <SaiLakshmiTeja.Vanka@windriver.com>
+---
+ horizon.init | 5 +++--
+ 1 file changed, 3 insertions(+), 2 deletions(-)
+
+diff --git a/horizon.init b/horizon.init
+index 1c05e5a..8478e18 100755
+--- a/horizon.init
++++ b/horizon.init
+@@ -21,7 +21,8 @@ MANAGE="/usr/share/openstack-dashboard/manage.py"
+ EXEC="/usr/bin/gunicorn"
+ BIND="localhost"
+ PORT="8008"
+-WORKER="eventlet"
++WORKER="gthread"
++THREADS="4"
+ WORKERS=`grep workers /etc/openstack-dashboard/horizon-config.ini | cut -f3 -d' '`
+ # Increased timeout to facilitate large image uploads
+ TIMEOUT="200"
+@@ -71,7 +72,7 @@ start()
+         -p Description="${SERVICE_DESC}" \
+         -p CPUShares=${SERVICE_CPUSHARES} -p PIDFile=${PIDFILE} \
+         ${EXEC} --pid ${PIDFILE} --preload --bind ${BIND}:${PORT} \
+-        --worker-class ${WORKER} --workers ${WORKERS} --timeout ${TIMEOUT} \
++        --worker-class ${WORKER} --workers ${WORKERS} --threads ${THREADS} --timeout ${TIMEOUT} \
+         --log-syslog  \
+         --config '/usr/share/openstack-dashboard/guni_config.py' \
+         --pythonpath '/usr/share/openstack-dashboard' \
