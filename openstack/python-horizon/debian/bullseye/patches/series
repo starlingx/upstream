@@ -3,3 +3,4 @@
 0003-List-default-Address-pools-row-actions-as-disabled.patch
 0004-Improving-delete-error-message-for-keystone-user-acc.patch
 0005-Auto-refresh.patch
+0006-Fix-WebSSO-logout-to-clear-both-sessions.patch

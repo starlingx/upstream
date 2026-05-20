@@ -1,0 +1,43 @@
+From aa6a55e006c5034b4a3181054f41bce003de43d6 Mon Sep 17 00:00:00 2001
+From: Felipe Vasconcelos <Felipe.Vasconcelos@windriver.com>
+Date: Mon, 6 Jul 2026 10:04:29 -0300
+Subject: [PATCH] Fix WebSSO logout to clear both sessions
+
+Signed-off-by: Felipe Vasconcelos <Felipe.Vasconcelos@windriver.com>
+---
+ openstack_auth/views.py | 11 +++++++----
+ 1 file changed, 7 insertions(+), 4 deletions(-)
+
+diff --git a/openstack_auth/views.py b/openstack_auth/views.py
+index 55fc9b2..a53caec 100644
+--- a/openstack_auth/views.py
++++ b/openstack_auth/views.py
+@@ -236,6 +236,7 @@ def websso(request):
+ 
+     auth_user.set_session_from_user(request, request.user)
+     auth.login(request, request.user)
++    request.session['websso_auth'] = True
+     if request.session.test_cookie_worked():
+         request.session.delete_test_cookie()
+     return django_http.HttpResponseRedirect(settings.LOGIN_REDIRECT_URL)
+@@ -257,11 +258,13 @@ def logout(request, login_url=None, **kwargs):
+     LOG.info(msg)
+ 
+     """ Securely logs a user out. """
+-    if (settings.WEBSSO_ENABLED and settings.WEBSSO_DEFAULT_REDIRECT and
++    if (settings.WEBSSO_ENABLED and
++            request.session.get('websso_auth') and
+             settings.WEBSSO_DEFAULT_REDIRECT_LOGOUT):
+-        auth_user.unset_session_user_variables(request)
+-        return django_http.HttpResponseRedirect(
+-            settings.WEBSSO_DEFAULT_REDIRECT_LOGOUT)
++        return django_auth_views.logout_then_login(
++            request,
++            login_url=settings.WEBSSO_DEFAULT_REDIRECT_LOGOUT,
++            **kwargs)
+ 
+     return django_auth_views.logout_then_login(request,
+                                                login_url=login_url,
+-- 
+2.43.0
+

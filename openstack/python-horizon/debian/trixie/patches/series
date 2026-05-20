@@ -3,3 +3,4 @@
 0004-Improving-delete-error-message-for-keystone-user-acc.patch
 0005-Auto-refresh.patch
 0006-Switch-gunicorn-worker-to-gthread.patch
+0007-Fix-WebSSO-logout-to-clear-both-sessions.patch
