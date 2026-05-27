@@ -1,0 +1,68 @@
+From 67804677e292026419524c3593f1e414a0ee8b41 Mon Sep 17 00:00:00 2001
+From: Marcelo de Castro Loebens <Marcelo.DeCastroLoebens@windriver.com>
+Date: Thu, 28 May 2026 11:26:56 -0400
+Subject: [PATCH] Block self-service password change for protected services
+
+The identity:change_password policy override has been ineffective since
+Pike [1]. Upstream keystone now doesn't enforce the policy checks in
+self-service password change endpoint.
+
+This patch adds a code-level check that blocks self-service password
+changes (POST /v3/users/{id}/password) for service accounts listed in
+[stx] protected_services config option.
+
+The admin path (PATCH /v3/users/{id}) remains unaffected.
+
+[1] https://docs.openstack.org/releasenotes/keystone/pike.html
+
+Signed-off-by: Marcelo de Castro Loebens <Marcelo.DeCastroLoebens@windriver.com>
+---
+ keystone/api/users.py | 19 +++++++++++++++++++
+ 1 file changed, 19 insertions(+)
+
+diff --git a/keystone/api/users.py b/keystone/api/users.py
+index e428e82..edb0638 100644
+--- a/keystone/api/users.py
++++ b/keystone/api/users.py
+@@ -19,6 +19,7 @@ import uuid
+ 
+ import flask
+ from oslo_serialization import jsonutils
++from oslo_config import cfg
+ from werkzeug import exceptions
+ 
+ from keystone.api._shared import json_home_relations
+@@ -41,6 +42,11 @@ CONF = keystone.conf.CONF
+ ENFORCER = rbac_enforcer.RBACEnforcer
+ PROVIDERS = provider_api.ProviderAPIs
+ 
++# STX: Register protected_services config option
++cfg.CONF.register_opt(
++    cfg.ListOpt('protected_services', default=[]),
++    group='stx')
++
+ ACCESS_TOKEN_ID_PARAMETER_RELATION = (
+     json_home_relations.os_oauth1_parameter_rel_func(
+         parameter_name='access_token_id'
+@@ -315,6 +321,19 @@ class UserChangePasswordResource(ks_flask.ResourceBase):
+         user_data = self.request_body_json.get('user', {})
+         ks_validation.lazy_validate(schema.password_change, user_data)
+ 
++        # STX: Block self-service password change for protected services
++        protected = CONF.stx.protected_services
++        if protected:
++            try:
++                user_ref = PROVIDERS.identity_api.get_user(user_id)
++                if user_ref.get('name') in protected:
++                    raise ks_exception.ForbiddenAction(
++                        action=_('Password change for protected '
++                                 'service account: %s')
++                        % user_ref['name'])
++            except ks_exception.UserNotFound:
++                pass
++
+         try:
+             PROVIDERS.identity_api.change_password(
+                 user_id=user_id,
+-- 
+2.43.0
