@@ -2,3 +2,4 @@
 0002-Add-location-parameter-for-volume-backup-creation.patch
 0003-Fix-user-password-set-missing-user-argument.patch
 0004-Fix-user-password-set-use-self-service-API.patch
+0005-Add-options-field-to-user-show-output.patch

@@ -1,0 +1,50 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Ayyappa Mantri <ayyappa.mantri@windriver.com>
+Date: Wed, 03 Jun 2026 00:00:00 +0000
+Subject: [PATCH] identity: Add options field to user show output
+
+The _format_user() function in python-openstackclient 7.4.0 uses a
+hardcoded list of columns that does not include the 'options' field.
+This means 'openstack user show' does not display user options such as
+ignore_password_expiry and ignore_lockout_failure_attempts.
+
+The previous version (5.4.0, used in bullseye) displayed all fields by
+iterating user._info.items(). The 7.4.0 refactor to openstacksdk
+(commit 680e3e301137, "identity: Migrate 'user' commands to SDK",
+Apr 4 2024) introduced the hardcoded column list but omitted 'options'.
+
+Add 'options' to both the columns and column_headers tuples in
+_format_user() so that user options are visible in the CLI output.
+
+This is a backport of upstream commit 9bcb1c5c0076 ("Fix missing
+'options' field in 'user show' command", May 20 2025). This patch
+can be dropped when the package is upversioned to >= 7.5.0.
+
+Signed-off-by: Ayyappa Mantri <ayyappa.mantri@windriver.com>
+---
+ openstackclient/identity/v3/user.py | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/openstackclient/identity/v3/user.py b/openstackclient/identity/v3/user.py
+index 582122f1..c3a4b5e2 100644
+--- a/openstackclient/identity/v3/user.py
++++ b/openstackclient/identity/v3/user.py
+@@ -39,6 +39,7 @@ def _format_user(user):
+         'id',
+         'name',
+         'description',
++        'options',
+         'password_expires_at',
+     )
+     column_headers = (
+@@ -49,6 +50,7 @@ def _format_user(user):
+         'id',
+         'name',
+         'description',
++        'options',
+         'password_expires_at',
+     )
+     return (
+--
+2.39.2
+
