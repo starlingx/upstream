@@ -4,3 +4,4 @@
 0004-Init-alembic-on-legacy-database.patch
 0005-Add-OAuth2-Proxy-headers-middleware.patch
 0006-Block-self-pwd-change-for-protected-services.patch
+0007-Populate-target-for-delete_service-policy-check.patch
