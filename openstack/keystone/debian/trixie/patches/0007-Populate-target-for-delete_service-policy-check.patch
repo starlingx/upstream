@@ -1,0 +1,72 @@
+From 0e6d1c4c573bdebcdfebe67d37c603137aaedf63 Mon Sep 17 00:00:00 2001
+From: Marcelo de Castro Loebens <Marcelo.DeCastroLoebens@windriver.com>
+Date: Thu, 28 May 2026 16:55:34 -0400
+Subject: [PATCH] Populate target for identity:delete_service policy check
+
+The identity:delete_service policy enforcement does not pass a target
+dict to oslo.policy, making it impossible for policy rules to check
+attributes of the service being deleted (e.g. target.service.name).
+
+The pre-Flask controller used get_member_from_driver [1] to
+automatically populate target.service before policy evaluation.
+When services.py was converted to Flask in Rocky (14.0.0) [2],
+this mechanism was lost. The build_target argument was added to
+the enforcer in Stein (15.0.0) [3], but services.py was never
+updated to use it.
+
+Add a build_target function that fetches the service entity and
+passes it as the target.
+
+[1] https://opendev.org/openstack/keystone/commit/c7a5c6cf2
+[2] https://opendev.org/openstack/keystone/commit/18c6e838b
+[3] https://opendev.org/openstack/keystone/commit/8697da7da
+
+Signed-off-by: Marcelo de Castro Loebens <Marcelo.DeCastroLoebens@windriver.com>
+---
+ keystone/api/services.py | 16 +++++++++++++++-
+ 1 file changed, 15 insertions(+), 1 deletion(-)
+
+diff --git a/keystone/api/services.py b/keystone/api/services.py
+index 61ee7ad..aadbccd 100644
+--- a/keystone/api/services.py
++++ b/keystone/api/services.py
+@@ -14,6 +14,8 @@
+ 
+ import http.client
+ 
++import flask
++
+ from keystone.api import validation
+ from keystone.catalog import schema
+ from keystone.common import json_home
+@@ -88,7 +90,10 @@ class ServiceResource(ks_flask.ResourceBase):
+         return self.wrap_member(ref)
+ 
+     def delete(self, service_id):
+-        ENFORCER.enforce_call(action='identity:delete_service')
++        ENFORCER.enforce_call(
++            action='identity:delete_service',
++            build_target=_build_service_target,
++        )
+         return (
+             PROVIDERS.catalog_api.delete_service(
+                 service_id, initiator=self.audit_initiator
+@@ -97,6 +102,15 @@ class ServiceResource(ks_flask.ResourceBase):
+         )
+ 
+ 
++def _build_service_target():
++    """Build target dict for service policy enforcement."""
++    target = {}
++    service_id = flask.request.view_args.get('service_id')
++    if service_id:
++        target['service'] = PROVIDERS.catalog_api.get_service(service_id)
++    return target
++
++
+ class ServiceAPI(ks_flask.APIBase):
+     _name = 'services'
+     _import_name = __name__
+-- 
+2.43.0
+
