@@ -1,0 +1,165 @@
+BUILDER=loci
+LABEL=stx-platformclients
+PROJECT=infra
+PROJECT_REPO=nil
+DIST_REPOS="OS"
+DIST_PACKAGES="python3-dev libffi-dev libfile-which-perl bash-completion vim helm kubernetes-1.32.13-client kubernetes-1.34.8-client kubernetes-1.35.2-client kubelogin keyutils platform-util"
+PIP_PACKAGES="pycryptodomex httplib2 pyopenssl ndg-httpsclient pyasn1 \
+    six prettytable PyYAML python-keystoneclient python-barbicanclient \
+    python-openstackclient cgtsclient fmclient distributedcloud_client \
+    osprofiler beautifulsoup4 oidcauthtools mechanize html5lib webencodings \
+    nfv-client software-client tsconfig pyjwkest oic"
+CUSTOMIZATION="echo '$(base64 -w0 <<'EOL'
+#!/bin/bash
+
+#
+# Copyright (c) 2026 Wind River Systems, Inc.
+#
+# SPDX-License-Identifier: Apache-2.0
+#
+# All Rights Reserved.
+#
+
+# Function to print warnings
+warn() {
+    echo -e "\e[1;33m[WARN]\e[0m $1" >&2
+}
+
+# Function to compare versions
+version_gt() { [ "$(printf '%s\n' "$1" "$2" | sort -V | head -n 1)" = "$2" ]; }
+
+# Function to get the expected k8s client version
+get_client_version() {
+    local VERSION="${MIN_KUBE_VERSION}"
+    local SUPPORTED="false"
+    if [[ -n "${KUBE_SERVER_VERSION}" && ( "${KUBE_AVAILABLE_VERSIONS}" == *"${KUBE_SERVER_VERSION}"* ) ]]; then
+        VERSION="${KUBE_SERVER_VERSION}"
+        local SUPPORTED="true"
+    elif version_gt "${KUBE_SERVER_VERSION}" "${MAX_KUBE_VERSION}"; then
+        VERSION="${MAX_KUBE_VERSION}"
+    fi
+    echo "${VERSION} ${SUPPORTED}"
+}
+
+# Function to request k8s apiserver version anonymously
+get_server_version_with_request() {
+    export KUBE_APISERVER_URL
+    KUBE_APISERVER_URL=$(awk '/server:/ {print $2}' ~/.kube/config)
+
+    if [[ -z "${KUBE_APISERVER_URL}" ]]; then
+        warn "Kube-apiserver address not yet configured in kubeconfig."
+        return
+    fi
+
+    local KUBE_APISERVER_VERSION=$(python3 - <<-'PY'
+import requests, os
+try:
+    print(
+        requests.get(
+            os.environ.get("KUBE_APISERVER_URL") + "/version",
+            verify=os.environ.get("OS_CACERT"),
+            timeout=10,
+        ).json()["gitVersion"].lstrip("v")
+    )
+except Exception:
+    pass
+PY
+)
+
+    if [[ -z "${KUBE_APISERVER_VERSION}" ]]; then
+        warn "Kube-apiserver version could not be retrieved."
+        return
+    fi
+
+    echo "${KUBE_APISERVER_VERSION}"
+}
+
+# Function to get the k8s server version
+get_server_version() {
+    local VERSION=$(echo "${KUBE_SERVER_VERSION}" || echo "")
+
+    # Get the last time that the server version file have been updated.
+    local TIME_DIFF=0
+    if [[ -f "${KUBE_SERVER_VERSION_FILE}" ]]; then
+        local FILE_MOD_TIME=$(stat -c %Y "${KUBE_SERVER_VERSION_FILE}")
+        local CURRENT_TIME=$(date +%s)
+        TIME_DIFF=$((CURRENT_TIME - FILE_MOD_TIME))
+    fi
+
+    # If the k8s server version is empty or
+    # the k8s server version file was updated more than 30min,
+    # get the version from the k8s server version file
+    if [[ -z "${VERSION}" || "${TIME_DIFF}" -gt 1800 ]]; then
+        VERSION=$(get_server_version_with_request)
+        [[ -z "${VERSION}" || ( ! "${VERSION}" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ) ]] && VERSION="${KUBE_CLIENT_VERSION}"
+        echo "${VERSION}" > "${KUBE_SERVER_VERSION_FILE}"
+    fi
+
+    echo "${VERSION}"
+}
+
+BASE_VOLUME="/wd"
+KUBE_BASE_PATH="/usr/local/kubernetes/"
+
+KUBE_SERVER_VERSION_FILE="${BASE_VOLUME}"/.kube_server_version
+
+KUBE_AVAILABLE_VERSIONS=$(ls "${KUBE_BASE_PATH}" | sort -V)
+
+MIN_KUBE_VERSION=$(echo "${KUBE_AVAILABLE_VERSIONS}" | head -n1)
+MAX_KUBE_VERSION=$(echo "${KUBE_AVAILABLE_VERSIONS}" | tail -n1)
+
+KUBE_CLIENT_VERSION="${MIN_KUBE_VERSION}"
+KUBE_SERVER_VERSION=$(cat "${KUBE_SERVER_VERSION_FILE}" 2> /dev/null)
+
+if [[ "${KUBE_SERVER_VERSION}" == "${MAX_KUBE_VERSION}" ]]; then
+    KUBE_CLIENT_VERSION="${KUBE_SERVER_VERSION}"
+else
+    KUBE_SERVER_VERSION=$(get_server_version)
+    read KUBE_CLIENT_VERSION KUBE_SERVER_VERSION_IS_SUPPORTED <<< $(get_client_version)
+
+    if [[ "${KUBE_SERVER_VERSION_IS_SUPPORTED}" == "false" ]]; then
+        warn "Detected a mismatch between Kubernetes client and server versions."
+        warn "Continuing with client version v${KUBE_CLIENT_VERSION} and server version v${KUBE_SERVER_VERSION}."
+    fi
+fi
+
+KUBE_BIN_PATH=$(find "${KUBE_BASE_PATH}${KUBE_CLIENT_VERSION}"/*/usr/bin/ -name "kubectl")
+
+exec "${KUBE_BIN_PATH}" "$@"
+EOL
+)' | base64 -d > /usr/local/bin/kubectl && chmod +x /usr/local/bin/kubectl"
+POSTBUILD_REMOVE_PYTHON_PACKAGES=""   # default is "pip"
+POSTBUILD_REMOVE_OS_PACKAGES=""       # default is "python3-pip python-pip-whl"
+POSTBUILD_COMMAND='
+CONSTRAINTS_URL="https://opendev.org/starlingx/root/raw/branch/master/build-tools/requirements/debian/trixie/upper-constraints.txt"
+
+# Override python/OS packages causing critical/high CVEs
+pip3 uninstall -y setuptools && pip install setuptools -c ${CONSTRAINTS_URL}
+pip3 uninstall -y urllib3 && pip install urllib3 -c ${CONSTRAINTS_URL}
+pip3 uninstall -y certifi && pip install certifi -c ${CONSTRAINTS_URL}
+pip3 uninstall -y wheel && pip install "wheel==0.38.1"
+pip3 uninstall -y Mako && pip install Mako -c ${CONSTRAINTS_URL}
+pip3 uninstall -y virtualenv && pip install "virtualenv==20.26.6"
+pip3 uninstall -y cryptography && pip install cryptography -c ${CONSTRAINTS_URL}
+pip3 uninstall -y future && pip install "future==0.18.3"
+pip3 uninstall -y jaraco.context && pip install "jaraco.context==6.1.0"
+
+# Override python packages causing syntaxe warnings
+pip3 uninstall -y prettytable && pip install prettytable -c ${CONSTRAINTS_URL}
+pip3 uninstall -y pecan && pip install pecan -c ${CONSTRAINTS_URL}
+
+apt-get remove -y python3-ply
+
+export SUDO_FORCE_REMOVE=yes
+apt-get remove -y sudo
+
+# POSTBUILD removal of Python/OS packages
+pip3 uninstall -y pip
+apt-get remove -y python3-pip python-pip-whl
+apt purge -y "~c"
+
+# cleanup loci side effects: pip, virtualenv packages installed by loci on PIPBOOTSTRAP=/var/lib/pipbootstrap
+rm -rf /var/lib/pipbootstrap
+rm -rf /root/.local
+rm -rf /opt/loci
+'
