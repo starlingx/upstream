@@ -1,10 +1,10 @@
 ---
 debname: keystone
-debver: 2:18.1.0-1+deb11u2
+debver: 2:18.1.0-1+deb11u3
 dl_path:
-  name: keystone-debian-18.1.0-1+deb11u2.tar.gz
-  url: https://salsa.debian.org/openstack-team/services/keystone/-/archive/debian/18.1.0-1+deb11u2/keystone-debian-18.1.0-1+deb11u2.tar.gz
-  sha256sum: 77c26a887d50d70d6380bf2eb9fc2bcdb8668a1515fe3dcea6c38b594be556f1
+  name: keystone-debian-18.1.0-1+deb11u3.tar.gz
+  url: https://salsa.debian.org/openstack-team/services/keystone/-/archive/debian/18.1.0-1+deb11u3/keystone-debian-18.1.0-1+deb11u3.tar.gz
+  sha256sum: fc14fb4cd80e4d05b783cab17f91af9baa6c4cef49cbaef495377f4c58537348
 revision:
   dist: $STX_DIST
   GITREVCOUNT:
