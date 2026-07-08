@@ -1,6 +1,6 @@
-From fc07c6ce2fca1cde2a8c0a8236a5404c4f914dd4 Mon Sep 17 00:00:00 2001
+From 69877cadda4e7466c43c84b5e19407883fe71747 Mon Sep 17 00:00:00 2001
 From: Felipe Vasconcelos <Felipe.Vasconcelos@windriver.com>
-Date: Fri, 8 May 2026 15:36:07 -0300
+Date: Wed, 8 Jul 2026 11:12:07 -0300
 Subject: [PATCH] Add OAuth2 Proxy headers middleware
 
 Keystone federation expects OIDC claims as WSGI environment
@@ -10,16 +10,20 @@ claims as HTTP headers instead. This middleware bridges the gap by
 decoding the JWT access token and mapping claims to the expected
 environment variables.
 
+The groups claim is mapped as a semicolon-separated string
+(HTTP_OIDC_GROUPS) to support Keystone federation mapping rules
+for OIDC role bindings.
+
 JWT signature verification is intentionally skipped - the trust
 boundary is OAuth2-Proxy, which already validated the token.
 
 Signed-off-by: Felipe Vasconcelos <Felipe.Vasconcelos@windriver.com>
 ---
  keystone/middleware/__init__.py               |   0
- keystone/middleware/oauth2_proxy_headers.py   |  96 ++++++++++++
+ keystone/middleware/oauth2_proxy_headers.py   | 105 ++++++++++++
  keystone/server/flask/application.py          |   4 +
- .../tests/unit/test_oauth2_proxy_headers.py   | 139 ++++++++++++++++++
- 4 files changed, 239 insertions(+)
+ .../tests/unit/test_oauth2_proxy_headers.py   | 152 ++++++++++++++++++
+ 4 files changed, 261 insertions(+)
  create mode 100644 keystone/middleware/__init__.py
  create mode 100644 keystone/middleware/oauth2_proxy_headers.py
  create mode 100644 keystone/tests/unit/test_oauth2_proxy_headers.py
@@ -29,10 +33,10 @@ new file mode 100644
 index 0000000..e69de29
 diff --git a/keystone/middleware/oauth2_proxy_headers.py b/keystone/middleware/oauth2_proxy_headers.py
 new file mode 100644
-index 0000000..78b4602
+index 0000000..20565b4
 --- /dev/null
 +++ b/keystone/middleware/oauth2_proxy_headers.py
-@@ -0,0 +1,96 @@
+@@ -0,0 +1,105 @@
 +# Copyright (c) 2026 Wind River Systems, Inc.
 +#
 +# SPDX-License-Identifier: Apache-2.0
@@ -109,6 +113,15 @@ index 0000000..78b4602
 +            for claim, env_var in claim_map.items():
 +                if claim in decoded:
 +                    environ[env_var] = decoded[claim]
++
++            # Map 'groups' claim as semicolon-separated string for
++            # Keystone federation mapping (matches mod_auth_openidc
++            # multi-value behavior)
++            if 'groups' in decoded and isinstance(decoded['groups'], list):
++                environ['HTTP_OIDC_GROUPS'] = ';'.join(decoded['groups'])
++            elif 'groups' in decoded:
++                environ['HTTP_OIDC_GROUPS'] = str(decoded['groups'])
++
 +        except Exception as e:
 +            LOG.error("Failed to decode JWT token: %s", e)
 +
@@ -130,7 +143,7 @@ index 0000000..78b4602
 +        return OAuth2ProxyHeadersMiddleware(app)
 +    return _filter
 diff --git a/keystone/server/flask/application.py b/keystone/server/flask/application.py
-index d1719f4..b544cc7 100644
+index 12d59b2..78620eb 100644
 --- a/keystone/server/flask/application.py
 +++ b/keystone/server/flask/application.py
 @@ -17,6 +17,7 @@ import flask
@@ -141,7 +154,8 @@ index d1719f4..b544cc7 100644
  
  try:
      # werkzeug 0.15.x
-@@ -174,3 +175,6 @@ def application_factory(name='public'):
+@@ -173,4 +174,7 @@ def application_factory(name='public'):
+     app.wsgi_app = wsgi_dispatcher.DispatcherMiddleware(
          app.wsgi_app,
          {'/healthcheck': hc_app})
 +    # Wrap the WSGI app with OAuth2 Proxy headers middleware
@@ -150,10 +164,10 @@ index d1719f4..b544cc7 100644
      return app
 diff --git a/keystone/tests/unit/test_oauth2_proxy_headers.py b/keystone/tests/unit/test_oauth2_proxy_headers.py
 new file mode 100644
-index 0000000..4d184dc
+index 0000000..6b91eba
 --- /dev/null
 +++ b/keystone/tests/unit/test_oauth2_proxy_headers.py
-@@ -0,0 +1,139 @@
+@@ -0,0 +1,152 @@
 +# Copyright (c) 2026 Wind River Systems, Inc.
 +#
 +# SPDX-License-Identifier: Apache-2.0
@@ -284,6 +298,19 @@ index 0000000..4d184dc
 +                         'https://dex.example.com')
 +        self.assertNotIn('HTTP_OIDC_EMAIL', environ)
 +        self.assertNotIn('HTTP_OIDC_SUB', environ)
++
++    def test_groups_claim_mapped_as_semicolon_string(self):
++        """Groups array is mapped as semicolon-separated string."""
++        token = self._make_token({
++            'iss': 'https://dex.example.com',
++            'email': 'user@example.com',
++            'groups': ['Level1SystemAdmin', 'Reader'],
++        })
++        environ = self._make_environ(
++            HTTP_X_FORWARDED_ACCESS_TOKEN=token)
++        self.middleware(environ, self.start_response)
++        self.assertEqual(environ['HTTP_OIDC_GROUPS'],
++                         'Level1SystemAdmin;Reader')
 +
 +    def test_filter_factory(self):
 +        """filter_factory returns a working middleware."""
