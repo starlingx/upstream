@@ -3,7 +3,7 @@ LABEL=stx-platformclients
 PROJECT=infra
 PROJECT_REPO=nil
 DIST_REPOS="OS"
-DIST_PACKAGES="python3-dev libffi-dev libfile-which-perl bash-completion vim helm kubernetes-1.32.13-client kubernetes-1.34.8-client kubernetes-1.35.2-client kubelogin keyutils platform-util"
+DIST_PACKAGES="python3-dev libffi-dev libfile-which-perl bash-completion vim helm kubernetes-1.32.13-client kubernetes-1.34.8-client kubernetes-1.35.2-client kubelogin keyutils platform-util platform-util-controller"
 PIP_PACKAGES="pycryptodomex httplib2 pyopenssl ndg-httpsclient pyasn1 \
     six prettytable PyYAML python-keystoneclient python-barbicanclient \
     python-openstackclient cgtsclient fmclient distributedcloud_client \
