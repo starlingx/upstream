@@ -1,6 +1,6 @@
-From 20a975deda8d4214608acf30d21d54d221f64932 Mon Sep 17 00:00:00 2001
+From ac8065469c747e9966183f281c7af8d6848d98c1 Mon Sep 17 00:00:00 2001
 From: Felipe Vasconcelos <Felipe.Vasconcelos@windriver.com>
-Date: Fri, 8 May 2026 15:24:07 -0300
+Date: Wed, 8 Jul 2026 10:08:45 -0300
 Subject: [PATCH] Add OAuth2 Proxy headers middleware
 
 Keystone federation expects OIDC claims as WSGI environment
@@ -10,16 +10,20 @@ claims as HTTP headers instead. This middleware bridges the gap by
 decoding the JWT access token and mapping claims to the expected
 environment variables.
 
+The groups claim is mapped as a semicolon-separated string
+(HTTP_OIDC_GROUPS) to support Keystone federation mapping rules
+for OIDC role bindings.
+
 JWT signature verification is intentionally skipped - the trust
 boundary is OAuth2-Proxy, which already validated the token.
 
 Signed-off-by: Felipe Vasconcelos <Felipe.Vasconcelos@windriver.com>
 ---
  keystone/middleware/__init__.py               |   0
- keystone/middleware/oauth2_proxy_headers.py   |  96 ++++++++++++
+ keystone/middleware/oauth2_proxy_headers.py   | 105 ++++++++++++
  keystone/server/flask/application.py          |   5 +
- .../tests/unit/test_oauth2_proxy_headers.py   | 139 ++++++++++++++++++
- 4 files changed, 240 insertions(+)
+ .../tests/unit/test_oauth2_proxy_headers.py   | 152 ++++++++++++++++++
+ 4 files changed, 262 insertions(+)
  create mode 100644 keystone/middleware/__init__.py
  create mode 100644 keystone/middleware/oauth2_proxy_headers.py
  create mode 100644 keystone/tests/unit/test_oauth2_proxy_headers.py
@@ -29,10 +33,10 @@ new file mode 100644
 index 0000000..e69de29
 diff --git a/keystone/middleware/oauth2_proxy_headers.py b/keystone/middleware/oauth2_proxy_headers.py
 new file mode 100644
-index 0000000..78b4602
+index 0000000..20565b4
 --- /dev/null
 +++ b/keystone/middleware/oauth2_proxy_headers.py
-@@ -0,0 +1,96 @@
+@@ -0,0 +1,105 @@
 +# Copyright (c) 2026 Wind River Systems, Inc.
 +#
 +# SPDX-License-Identifier: Apache-2.0
@@ -109,6 +113,15 @@ index 0000000..78b4602
 +            for claim, env_var in claim_map.items():
 +                if claim in decoded:
 +                    environ[env_var] = decoded[claim]
++
++            # Map 'groups' claim as semicolon-separated string for
++            # Keystone federation mapping (matches mod_auth_openidc
++            # multi-value behavior)
++            if 'groups' in decoded and isinstance(decoded['groups'], list):
++                environ['HTTP_OIDC_GROUPS'] = ';'.join(decoded['groups'])
++            elif 'groups' in decoded:
++                environ['HTTP_OIDC_GROUPS'] = str(decoded['groups'])
++
 +        except Exception as e:
 +            LOG.error("Failed to decode JWT token: %s", e)
 +
@@ -152,10 +165,10 @@ index ddde080..31df3e6 100644
      return app
 diff --git a/keystone/tests/unit/test_oauth2_proxy_headers.py b/keystone/tests/unit/test_oauth2_proxy_headers.py
 new file mode 100644
-index 0000000..4d184dc
+index 0000000..6b91eba
 --- /dev/null
 +++ b/keystone/tests/unit/test_oauth2_proxy_headers.py
-@@ -0,0 +1,139 @@
+@@ -0,0 +1,152 @@
 +# Copyright (c) 2026 Wind River Systems, Inc.
 +#
 +# SPDX-License-Identifier: Apache-2.0
@@ -286,6 +299,19 @@ index 0000000..4d184dc
 +                         'https://dex.example.com')
 +        self.assertNotIn('HTTP_OIDC_EMAIL', environ)
 +        self.assertNotIn('HTTP_OIDC_SUB', environ)
++
++    def test_groups_claim_mapped_as_semicolon_string(self):
++        """Groups array is mapped as semicolon-separated string."""
++        token = self._make_token({
++            'iss': 'https://dex.example.com',
++            'email': 'user@example.com',
++            'groups': ['Level1SystemAdmin', 'Reader'],
++        })
++        environ = self._make_environ(
++            HTTP_X_FORWARDED_ACCESS_TOKEN=token)
++        self.middleware(environ, self.start_response)
++        self.assertEqual(environ['HTTP_OIDC_GROUPS'],
++                         'Level1SystemAdmin;Reader')
 +
 +    def test_filter_factory(self):
 +        """filter_factory returns a working middleware."""
