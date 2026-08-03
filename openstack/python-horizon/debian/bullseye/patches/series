@@ -4,3 +4,4 @@
 0004-Improving-delete-error-message-for-keystone-user-acc.patch
 0005-Auto-refresh.patch
 0006-Fix-WebSSO-logout-to-clear-both-sessions.patch
+0007-Escape-dollar-sign-in-shellfilter-to-block-command-.patch
