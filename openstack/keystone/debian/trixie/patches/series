@@ -5,3 +5,4 @@
 0005-Add-OAuth2-Proxy-headers-middleware.patch
 0006-Block-self-pwd-change-for-protected-services.patch
 0007-Populate-target-for-delete_service-policy-check.patch
+0008-Accept-federated-64-char-SHA256-user-IDs-in-UUID-val.patch

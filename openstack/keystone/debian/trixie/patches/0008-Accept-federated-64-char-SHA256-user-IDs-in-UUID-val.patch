@@ -1,0 +1,60 @@
+From e80d85d30524a55e8eb9431c179794f571dc2967 Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Luiz=20Andr=C3=A9=20Ventura=20Gosling?=
+ <luizandre.gosling@windriver.com>
+Date: Fri, 21 Aug 2026 17:39:18 -0300
+Subject: [PATCH] Accept federated 64-char SHA256 user IDs in UUID validation
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+Keystone's federation mapping assigns users authenticated via
+WebSSO/OIDC (Dex) a 64-char SHA256 hex user ID (hash of idp_id +
+protocol + unique_id), instead of the standard 32-char UUID that
+uuidutils.is_uuid_like() expects.
+
+_validate_uuid_format() is the jsonschema format checker keystone
+registers for any API field declared with "format": "uuid" -- for
+example user_id on the OS-EC2/OS-CERT credential schema
+(keystone/credential/schema.py) and trustor_user_id/trustee_user_id
+on the trust schema. Any request carrying a federated user's 64-char
+ID through one of these fields is rejected with:
+
+  Invalid input for field/attribute user_id. Value: <64-char-id>.
+  '<64-char-id>' is not a 'uuid'
+
+which surfaces in Horizon as "Could not retrieve current user's
+session." on DC Admin > Cloud Overview when a federated user
+switches to a subcloud region.
+
+Accept 64-char lowercase hex strings in addition to standard UUIDs,
+since that is the only other format keystone itself produces for a
+user_id.
+
+Signed-off-by: Luiz André Ventura Gosling <luizandre.gosling@windriver.com>
+---
+ keystone/api/validation/validators.py | 9 +++++++++
+ 1 file changed, 9 insertions(+)
+
+diff --git a/keystone/api/validation/validators.py b/keystone/api/validation/validators.py
+index bbc6c25..1098c81 100644
+--- a/keystone/api/validation/validators.py
++++ b/keystone/api/validation/validators.py
+@@ -138,6 +138,15 @@ def _validate_uuid_format(instance: object) -> bool:
+     if not isinstance(instance, str):
+         return True
+ 
++    if len(instance) == 64 and all(c in "0123456789abcdef" for c in instance):
++        # Federated (WebSSO/OIDC) users are assigned a 64-char SHA256 hex
++        # user ID by keystone's own federation mapping, instead of the
++        # standard 32-char UUID. Accept that format here too, otherwise
++        # any API call carrying a federated user_id (e.g. credentials,
++        # role assignments) is rejected before it reaches the resource
++        # lookup.
++        return True
++
+     return uuidutils.is_uuid_like(instance)
+ 
+ 
+-- 
+2.43.0
+
