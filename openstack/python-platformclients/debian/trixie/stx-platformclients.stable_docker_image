@@ -141,6 +141,7 @@ pip3 uninstall -y wheel && pip install "wheel==0.38.1"
 pip3 uninstall -y Mako && pip install Mako -c ${CONSTRAINTS_URL}
 pip3 uninstall -y virtualenv && pip install "virtualenv==20.26.6"
 pip3 uninstall -y cryptography && pip install cryptography -c ${CONSTRAINTS_URL}
+pip3 uninstall -y pyOpenSSL && pip install pyOpenSSL -c ${CONSTRAINTS_URL}
 pip3 uninstall -y future && pip install "future==0.18.3"
 pip3 uninstall -y jaraco.context && pip install "jaraco.context==6.1.0"
 
