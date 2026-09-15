@@ -1,4 +1,4 @@
-From 67804677e292026419524c3593f1e414a0ee8b41 Mon Sep 17 00:00:00 2001
+From 3c38e6d40f0f1b1108d16d1a37794241ba502aff Mon Sep 17 00:00:00 2001
 From: Marcelo de Castro Loebens <Marcelo.DeCastroLoebens@windriver.com>
 Date: Thu, 28 May 2026 11:26:56 -0400
 Subject: [PATCH] Block self-service password change for protected services
@@ -21,7 +21,7 @@ Signed-off-by: Marcelo de Castro Loebens <Marcelo.DeCastroLoebens@windriver.com>
  1 file changed, 19 insertions(+)
 
 diff --git a/keystone/api/users.py b/keystone/api/users.py
-index e428e82..edb0638 100644
+index 3e7c5b8..729e4a0 100644
 --- a/keystone/api/users.py
 +++ b/keystone/api/users.py
 @@ -19,6 +19,7 @@ import uuid
@@ -31,8 +31,8 @@ index e428e82..edb0638 100644
 +from oslo_config import cfg
  from werkzeug import exceptions
  
- from keystone.api._shared import json_home_relations
-@@ -41,6 +42,11 @@ CONF = keystone.conf.CONF
+ from keystone.api._shared import delegation
+@@ -42,6 +43,11 @@ CONF = keystone.conf.CONF
  ENFORCER = rbac_enforcer.RBACEnforcer
  PROVIDERS = provider_api.ProviderAPIs
  
@@ -44,7 +44,7 @@ index e428e82..edb0638 100644
  ACCESS_TOKEN_ID_PARAMETER_RELATION = (
      json_home_relations.os_oauth1_parameter_rel_func(
          parameter_name='access_token_id'
-@@ -315,6 +321,19 @@ class UserChangePasswordResource(ks_flask.ResourceBase):
+@@ -381,6 +387,19 @@ class UserChangePasswordResource(ks_flask.ResourceBase):
          user_data = self.request_body_json.get('user', {})
          ks_validation.lazy_validate(schema.password_change, user_data)
  
@@ -66,3 +66,4 @@ index e428e82..edb0638 100644
                  user_id=user_id,
 -- 
 2.43.0
+
