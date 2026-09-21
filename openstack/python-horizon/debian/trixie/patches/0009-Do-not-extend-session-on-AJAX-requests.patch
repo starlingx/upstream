@@ -1,0 +1,64 @@
+From b1f0000000000000000000000000000000000009 Mon Sep 17 00:00:00 2001
+From: do Rego Lemos, Italo <Italo.doRegoLemos@windriver.com>
+Date: Wed, 16 Sep 2026 20:00:00 +0000
+Subject: [PATCH] Do not extend session on AJAX requests
+
+SESSION_TIMEOUT is meant to act as an idle timeout, refreshing the
+session expiry on user activity when SESSION_REFRESH is True. However
+the expiry refresh in HorizonMiddleware._process_request ran before the
+is_ajax() early-return, so background AJAX polling from auto-refreshing
+panels (e.g. Admin > Inventory > Hosts, which polls roughly every 5s)
+reset the session expiry continuously. As a result an idle but open
+dashboard was never logged out and SESSION_TIMEOUT had no effect for
+both keystone and OIDC/WebSSO authenticated sessions.
+
+Move the is_ajax() check ahead of the SESSION_REFRESH block so that
+only genuine (non-AJAX) user activity refreshes the session expiry.
+AJAX requests no longer extend the session, making SESSION_TIMEOUT a
+true idle timeout while active users remain logged in.
+
+Signed-off-by: do Rego Lemos, Italo <Italo.doRegoLemos@windriver.com>
+---
+ horizon/middleware/base.py | 20 +++++++++++---------
+ 1 file changed, 11 insertions(+), 9 deletions(-)
+
+diff --git a/horizon/middleware/base.py b/horizon/middleware/base.py
+--- a/horizon/middleware/base.py
++++ b/horizon/middleware/base.py
+@@ -67,15 +67,11 @@ class HorizonMiddleware(object):
+             # to avoid creating too many sessions
+             return None
+ 
+-        # Since we know the user is present and authenticated, lets refresh the
+-        # session expiry if configured to do so.
+-        if settings.SESSION_REFRESH:
+-            timeout = settings.SESSION_TIMEOUT
+-            token_life = request.user.token.expires - datetime.datetime.now(
+-                datetime.timezone.utc)
+-            session_time = min(timeout, int(token_life.total_seconds()))
+-            request.session.set_expiry(session_time)
+ 
++        # NOTE: the AJAX check is intentionally BEFORE the session expiry
++        # refresh below, so background AJAX polling (auto-refreshing panels)
++        # does not keep resetting SESSION_TIMEOUT. The idle timeout must
++        # reflect genuine user activity (non-AJAX requests) only.
+         if http_utils.is_ajax(request):
+             # if the request is Ajax we do not want to proceed, as clients can
+             #  1) create pages with constant polling, which can create race
+@@ -83,6 +79,14 @@ class HorizonMiddleware(object):
+             #  2) might leave a user seemingly left logged in forever
+             #  3) thrashes db backed session engines with tons of changes
+             return None
++        # Since we know the user is present and authenticated, lets refresh the
++        # session expiry if configured to do so.
++        if settings.SESSION_REFRESH:
++            timeout = settings.SESSION_TIMEOUT
++            token_life = request.user.token.expires - datetime.datetime.now(
++                datetime.timezone.utc)
++            session_time = min(timeout, int(token_life.total_seconds()))
++            request.session.set_expiry(session_time)
+         # If we use cookie-based sessions, check that the cookie size does not
+         # reach the max size accepted by common web browsers.
+         if (
+-- 
+2.43.0
