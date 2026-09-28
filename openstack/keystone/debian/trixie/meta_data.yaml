@@ -1,7 +1,7 @@
 ---
 debname: keystone
 debver: 27.0.0-3+deb13u5
-archive: https://snapshot.debian.org/archive/debian/20260903T023604Z/pool/main/k/keystone/
+archive: https://snapshot.debian.org/archive/debian/20260925T082640Z/pool/main/k/keystone/
 revision:
   dist: $STX_DIST
   GITREVCOUNT:
