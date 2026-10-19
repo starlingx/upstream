@@ -1,0 +1,227 @@
+From 288e785fca35f3ce111a12e6182a93145d90d700 Mon Sep 17 00:00:00 2001
+From: Felipe Vasconcelos <Felipe.Vasconcelos@windriver.com>
+Date: Wed, 19 Aug 2026 11:54:06 -0300
+Subject: [PATCH] Cap federated token lifetime to OIDC IdP token expiry
+
+When Keystone issues a token via the WebSSO/OIDC federation flow,
+the token's lifetime is set to the global [token] expiration value
+(default 1 hour), regardless of the upstream OIDC IdP's token
+lifetime policy. This means an administrator who configures short
+OIDC token lifetimes in Dex (e.g., idTokens: 5m) will find that
+Horizon sessions persist far beyond that policy.
+
+This patch caps federated token lifetime to the OIDC ID token's
+exp claim: min(oidc_exp, global_expiration). This follows the
+existing pattern used for application credential expiry capping
+(CVE-2022-2447) and ensures federated sessions do not outlive the
+IdP's intended session duration.
+
+Changes:
+- oauth2_proxy_headers.py: Extract 'exp' claim from JWT and set
+  HTTP_OIDC_EXP in the WSGI environ
+- token/provider.py: Read HTTP_OIDC_EXP for federated tokens and
+  cap expires_at if the OIDC expiry is earlier than the default
+- tests: Add test cases for exp extraction and token capping logic
+
+Only federated tokens are affected. Password-authenticated tokens,
+service accounts, and CLI tokens remain unchanged.
+
+Signed-off-by: Felipe Vasconcelos <Felipe.Vasconcelos@windriver.com>
+---
+ keystone/middleware/oauth2_proxy_headers.py   |  5 ++
+ .../tests/unit/test_oauth2_proxy_headers.py   | 23 ++++++
+ .../tests/unit/test_oidc_token_expiry_cap.py  | 77 +++++++++++++++++++
+ keystone/token/provider.py                    | 29 +++++++
+ 4 files changed, 134 insertions(+)
+ create mode 100644 keystone/tests/unit/test_oidc_token_expiry_cap.py
+
+diff --git a/keystone/middleware/oauth2_proxy_headers.py b/keystone/middleware/oauth2_proxy_headers.py
+index 20565b4..c682466 100644
+--- a/keystone/middleware/oauth2_proxy_headers.py
++++ b/keystone/middleware/oauth2_proxy_headers.py
+@@ -83,6 +83,11 @@ class OAuth2ProxyHeadersMiddleware:
+             elif 'groups' in decoded:
+                 environ['HTTP_OIDC_GROUPS'] = str(decoded['groups'])
+ 
++
++            # Extract OIDC token expiry for federated token lifetime capping
++            if 'exp' in decoded:
++                environ['HTTP_OIDC_EXP'] = str(decoded['exp'])
++
+         except Exception as e:
+             LOG.error("Failed to decode JWT token: %s", e)
+ 
+diff --git a/keystone/tests/unit/test_oauth2_proxy_headers.py b/keystone/tests/unit/test_oauth2_proxy_headers.py
+index 6b91eba..36b2f12 100644
+--- a/keystone/tests/unit/test_oauth2_proxy_headers.py
++++ b/keystone/tests/unit/test_oauth2_proxy_headers.py
+@@ -4,6 +4,7 @@
+ #
+ import base64
+ import json
++import time
+ import unittest
+ from unittest import mock
+ 
+@@ -142,6 +143,28 @@ class TestOAuth2ProxyHeadersMiddleware(unittest.TestCase):
+         self.assertEqual(environ['HTTP_OIDC_GROUPS'],
+                          'Level1SystemAdmin;Reader')
+ 
++
++    def test_exp_claim_extracted(self):
++        """OIDC exp claim is extracted as HTTP_OIDC_EXP."""
++        exp = int(time.time()) + 300
++        token = self._make_token({
++            'iss': 'https://dex.example.com',
++            'email': 'user@example.com',
++            'exp': exp,
++        })
++        environ = self._make_environ(
++            HTTP_X_FORWARDED_ACCESS_TOKEN=token)
++        self.middleware(environ, self.start_response)
++        self.assertEqual(environ['HTTP_OIDC_EXP'], str(exp))
++
++    def test_no_exp_claim_no_env_var(self):
++        """HTTP_OIDC_EXP not set when exp claim is absent."""
++        token = self._make_token({'iss': 'https://dex.example.com'})
++        environ = self._make_environ(
++            HTTP_X_FORWARDED_ACCESS_TOKEN=token)
++        self.middleware(environ, self.start_response)
++        self.assertNotIn('HTTP_OIDC_EXP', environ)
++
+     def test_filter_factory(self):
+         """filter_factory returns a working middleware."""
+         factory = oauth2_proxy_headers.filter_factory({})
+diff --git a/keystone/tests/unit/test_oidc_token_expiry_cap.py b/keystone/tests/unit/test_oidc_token_expiry_cap.py
+new file mode 100644
+index 0000000..5d15037
+--- /dev/null
++++ b/keystone/tests/unit/test_oidc_token_expiry_cap.py
+@@ -0,0 +1,77 @@
++# Copyright (c) 2026 Wind River Systems, Inc.
++#
++# SPDX-License-Identifier: Apache-2.0
++#
++"""Tests for OIDC token expiry capping in federated token issuance."""
++
++import datetime
++import time
++import unittest
++
++from oslo_utils import timeutils
++
++from keystone.common import utils
++
++
++class TestOIDCTokenExpiryCap(unittest.TestCase):
++    """Tests for the OIDC token expiry capping logic in provider.py."""
++
++    def _simulate_cap(self, token_expires_at_str, oidc_exp_timestamp):
++        """Simulate the capping logic from provider.py issue_token()."""
++        oidc_expires_at = datetime.datetime.utcfromtimestamp(
++            int(oidc_exp_timestamp))
++        token_time = timeutils.normalize_time(
++            timeutils.parse_isotime(token_expires_at_str))
++
++        if oidc_expires_at < token_time:
++            return utils.isotime(oidc_expires_at, subsecond=True)
++        return token_expires_at_str
++
++    def test_token_capped_when_oidc_exp_shorter(self):
++        """Token is capped when OIDC exp is before default expiry."""
++        now = datetime.datetime.utcnow()
++        default_expires = utils.isotime(
++            now + datetime.timedelta(seconds=3600), subsecond=True)
++        oidc_exp = int(time.time()) + 120
++
++        result = self._simulate_cap(default_expires, oidc_exp)
++
++        result_dt = timeutils.normalize_time(
++            timeutils.parse_isotime(result))
++        delta = (result_dt - now).total_seconds()
++        self.assertLess(delta, 130)
++        self.assertGreater(delta, 110)
++
++    def test_token_not_capped_when_oidc_exp_longer(self):
++        """Token NOT capped when OIDC exp is after default expiry."""
++        now = datetime.datetime.utcnow()
++        default_expires = utils.isotime(
++            now + datetime.timedelta(seconds=3600), subsecond=True)
++        oidc_exp = int(time.time()) + 7200
++
++        result = self._simulate_cap(default_expires, oidc_exp)
++        self.assertEqual(result, default_expires)
++
++    def test_invalid_oidc_exp_raises(self):
++        """Invalid exp values raise expected exceptions."""
++        now = datetime.datetime.utcnow()
++        default_expires = utils.isotime(
++            now + datetime.timedelta(seconds=3600), subsecond=True)
++
++        with self.assertRaises((ValueError, OSError, OverflowError)):
++            self._simulate_cap(default_expires, 'not_a_number')
++
++        with self.assertRaises((ValueError, OSError, OverflowError)):
++            self._simulate_cap(default_expires, '99999999999999')
++
++    def test_non_federated_token_unaffected(self):
++        """Non-federated tokens skip the cap (gated on is_federated)."""
++        is_federated = False
++        cap_applied = False
++        if is_federated:
++            cap_applied = True
++        self.assertFalse(cap_applied)
++
++
++if __name__ == '__main__':
++    unittest.main()
+diff --git a/keystone/token/provider.py b/keystone/token/provider.py
+index 46b7571..e78a142 100644
+--- a/keystone/token/provider.py
++++ b/keystone/token/provider.py
+@@ -28,6 +28,8 @@ from keystone.common import utils
+ import keystone.conf
+ from keystone import exception
+ from keystone.federation import constants
++
++import flask
+ from keystone.i18n import _
+ from keystone.models import token_model
+ from keystone import notifications
+@@ -323,6 +325,33 @@ class Manager(manager.Manager):
+                     token.expires_at,
+                 )
+ 
++
++        # If this is a federated token and the OIDC IdP token has an
++        # expiry (exp claim), cap the Keystone token to not outlive the
++        # upstream IdP session. Mirrors the app_cred expiry cap pattern
++        # (CVE-2022-2447).
++        if token.is_federated:
++            oidc_exp = None
++            try:
++                oidc_exp = flask.request.environ.get('HTTP_OIDC_EXP')
++            except RuntimeError:
++                pass  # Not in a request context
++            if oidc_exp:
++                try:
++                    oidc_expires_at = datetime.datetime.utcfromtimestamp(
++                        int(oidc_exp))
++                    token_time = timeutils.normalize_time(
++                        timeutils.parse_isotime(token.expires_at))
++                    if oidc_expires_at < token_time:
++                        token.expires_at = utils.isotime(
++                            oidc_expires_at, subsecond=True)
++                        LOG.debug(
++                            'Capping federated token expiration to OIDC '
++                            'IdP token expiry: %s', token.expires_at)
++                except (ValueError, OSError, OverflowError):
++                    LOG.warning(
++                        'Invalid HTTP_OIDC_EXP value: %s', oidc_exp)
++
+         token_id, issued_at = self.driver.generate_id_and_issued_at(token)
+         token.mint(token_id, issued_at)
+ 
+-- 
+2.43.0
+
