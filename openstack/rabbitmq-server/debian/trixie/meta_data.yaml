@@ -1,10 +1,8 @@
 ---
 debname: rabbitmq-server
-debver: 4.0.5-6
-dl_path:
-  name: rabbitmq-server-debian-4.0.5-6.tar.gz
-  url: https://salsa.debian.org/openstack-team/third-party/rabbitmq-server/-/archive/debian/4.0.5-6/rabbitmq-server-debian-4.0.5-6.tar.gz
-  sha256sum: dfdbfdf570423ad2452ce1dd655d8ad6c08cad5b06d1a1a22690f94c4665e49a
+debver: 4.0.5-6+deb13u2
+archive: https://snapshot.debian.org/archive/debian/20260925T082640Z/pool/main/r/rabbitmq-server/
+dsc_sha256: 3ef90676b3f0fed38338c20e13438c1504716c8c10d92f28e215ddaf4173e7ab
 revision:
   dist: $STX_DIST
   GITREVCOUNT:
