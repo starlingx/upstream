@@ -1,0 +1,35 @@
+From df165a244ae9951f1e6e3b02e6249a997c0d80e7 Mon Sep 17 00:00:00 2001
+From: Felipe Vasconcelos <Felipe.Vasconcelos@windriver.com>
+Date: Wed, 28 Oct 2026 13:18:26 -0300
+Subject: [PATCH] zh-Hans: un-fuzzy Role/Roles plural for Angular Roles panel
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+Remove the stale "#, fuzzy" flag on the Role/Roles plural in the
+openstack_dashboard zh_Hans djangojs catalog. The entry is already
+translated upstream (角色) but, being fuzzy, is dropped at compile
+(the build does not pass --use-fuzzy), so the AngularJS Roles panel
+title falls back to English. Un-fuzzying restores upstream's own
+translation; no new translation content is authored here.
+
+Signed-off-by: Felipe Vasconcelos <Felipe.Vasconcelos@windriver.com>
+---
+ openstack_dashboard/locale/zh_Hans/LC_MESSAGES/djangojs.po | 1 -
+ 1 file changed, 1 deletion(-)
+
+diff --git a/openstack_dashboard/locale/zh_Hans/LC_MESSAGES/djangojs.po b/openstack_dashboard/locale/zh_Hans/LC_MESSAGES/djangojs.po
+index 3266f71..9fcdc60 100644
+--- a/openstack_dashboard/locale/zh_Hans/LC_MESSAGES/djangojs.po
++++ b/openstack_dashboard/locale/zh_Hans/LC_MESSAGES/djangojs.po
+@@ -2193,7 +2193,6 @@ msgstr "版本号"
+ msgid "Right"
+ msgstr "右"
+ 
+-#, fuzzy
+ msgid "Role"
+ msgid_plural "Roles"
+ msgstr[0] "角色"
+-- 
+2.43.0
+

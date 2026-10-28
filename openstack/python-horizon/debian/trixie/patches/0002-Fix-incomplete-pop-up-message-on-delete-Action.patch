@@ -37,13 +37,13 @@ index 5f42784..b416f19 100644
 +  if (name_string == "") {
 +    params = {
 +      selection_list: name_array,
-+      help: 'This action cannot be undone.'
++      help: gettext('This action cannot be undone.')
 +    };
 +
 +  }
 +  else {
 +    params = {
-+      selection: 'You have selected: ' + name_string + '.',
++      selection: interpolate(gettext('You have selected: %s.'),[name_string]),
 +      selection_list: name_array,
 +      help: help_text
 +    };
