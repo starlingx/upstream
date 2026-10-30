@@ -45,5 +45,8 @@ python3-oslo.messaging
 #python-wsme
 python3-wsme
 
+#python-xstatic-angular-gettext
+python3-xstatic-angular-gettext
+
 #rabbitmq-server
 rabbitmq-server

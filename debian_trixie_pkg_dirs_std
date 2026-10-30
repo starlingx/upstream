@@ -11,4 +11,5 @@ openstack/python-openstacksdk
 openstack/python-osc-lib
 openstack/python-oslo-messaging
 openstack/python-wsme
+openstack/python-xstatic-angular-gettext
 openstack/rabbitmq-server

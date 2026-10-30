@@ -1,0 +1,12 @@
+---
+debname: python-xstatic-angular-gettext
+debver: 2.4.1.0-10
+dl_path:
+  name: python-xstatic-angular-gettext-debian-2.4.1.0-10.tar.gz
+  url: https://salsa.debian.org/openstack-team/xstatic/python-xstatic-angular-gettext/-/archive/debian/2.4.1.0-10/python-xstatic-angular-gettext-debian-2.4.1.0-10.tar.gz
+  md5sum: 878ba7ff120a1ead43022f32701d4bb2
+revision:
+  dist: $STX_DIST
+  GITREVCOUNT:
+    BASE_SRCREV: ab54b2f24ca15cad693c93ca54a4ae7288fc836d
+    SRC_DIR: ${MY_REPO}/stx/upstream/openstack/python-xstatic-angular-gettext
