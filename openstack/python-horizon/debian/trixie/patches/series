@@ -7,3 +7,4 @@
 0008-Escape-dollar-sign-in-shellfilter-to-block-command-.patch
 0009-Do-not-extend-session-on-AJAX-requests.patch
 0010-zh-Hans-complete-upstream-panel-coverage.patch
+0011-ship-openstack-auth-locale.patch

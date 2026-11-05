@@ -1,0 +1,38 @@
+From 33bc2a1131cc875777f7b5d24aaff163115af154 Mon Sep 17 00:00:00 2001
+From: Felipe Vasconcelos <Felipe.Vasconcelos@windriver.com>
+Date: Thu, 5 Nov 2026 15:39:30 -0300
+Subject: [PATCH] Ship openstack_auth message catalogs in the package
+
+The Debian MANIFEST.in (as amended by fixed-horizon-MANIFEST.in.patch)
+grafts data files for doc, horizon and openstack_dashboard, but has no
+entry for openstack_auth. Its compiled gettext catalogs (*.mo) are
+therefore dropped from python3-django-horizon, so every
+openstack_auth-only string - the login "Authenticate using" selector
+label, auth-method and password-change prompts, and the authentication
+status messages - falls back to English even though upstream ships a
+translated zh_Hans catalog for them. Strings that also exist in
+horizon/openstack_dashboard (Password, Domain, User Name) render
+translated because those catalogs are shipped.
+
+Add a recursive-include for openstack_auth mirroring the other grafts so
+its compiled catalogs are packaged. This ships the already-present
+upstream translations for all languages; no translation content is
+authored here.
+
+Signed-off-by: Felipe Vasconcelos <Felipe.Vasconcelos@windriver.com>
+---
+ MANIFEST.in | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/MANIFEST.in b/MANIFEST.in
+index ef9a297..330b4b0 100644
+--- a/MANIFEST.in
++++ b/MANIFEST.in
+@@ -1,6 +1,7 @@
+ recursive-include doc *
+ recursive-include horizon *
+ recursive-include openstack_dashboard *
++recursive-include openstack_auth *
+ recursive-include tools *.py *.sh
+ recursive-include openstack_dashboard/conf *
+ 
