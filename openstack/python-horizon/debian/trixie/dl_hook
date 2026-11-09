@@ -1,0 +1,63 @@
+#!/bin/bash
+#
+# Copyright (c) 2026 Wind River Systems, Inc.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+
+# Assemble the horizon source tree from the Debian snapshot tarballs
+# listed under dl_files in meta_data.yaml (upstream tarball plus the
+# Debian packaging), then add the StarlingX files that the patches in
+# debian/trixie/patches/ expect to find in the top of the tree.
+#
+# The tarballs have fixed names, so this script does not change when
+# the version is updated: only the url and sha256sum of the two dl_files
+# entries (and debver) need to be changed in meta_data.yaml.
+#
+# The only parameter is the name of the folder where the source code
+# is extracted to. The tarballs are in the current directory, which is
+# where this script is located.
+# Tools needed: tar
+
+set -x
+
+ORIG_TARBALL=horizon-orig.tar.xz
+DEBIAN_TARBALL=horizon-debian.tar.xz
+STX_FILES=${MY_REPO}/stx/upstream/openstack/python-horizon/files
+
+if [ ! -d "${STX_FILES}" ]; then
+    echo "No such directory: ${STX_FILES}"
+    exit 1
+fi
+
+mkdir "$1"
+tar xf "${ORIG_TARBALL}" --strip-components 1 -C "$1"
+if [ $? -ne 0 ]; then
+    echo "tar failed: orig source!"
+    exit 1
+fi
+
+cd "$1"
+tar xf "../${DEBIAN_TARBALL}"
+if [ $? -ne 0 ]; then
+    echo "tar failed: debian folder!"
+    exit 1
+fi
+
+# The dl_path flow copies the meta_data.yaml src_files into the top of
+# the source tree. The dl_hook flow does not, so do it here.
+cp -rL "${STX_FILES}"/* .
+if [ $? -ne 0 ]; then
+    echo "copy failed: stx files!"
+    exit 1
+fi

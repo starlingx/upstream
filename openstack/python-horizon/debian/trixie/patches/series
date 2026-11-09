@@ -4,7 +4,6 @@
 0005-Auto-refresh.patch
 0006-Switch-gunicorn-worker-to-gthread.patch
 0007-Fix-WebSSO-logout-to-clear-both-sessions.patch
-0008-Escape-dollar-sign-in-shellfilter-to-block-command-.patch
 0009-Do-not-extend-session-on-AJAX-requests.patch
 0010-zh-Hans-complete-upstream-panel-coverage.patch
 0011-ship-openstack-auth-locale.patch

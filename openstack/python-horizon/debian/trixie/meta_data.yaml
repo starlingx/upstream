@@ -1,10 +1,16 @@
 ---
 debname: horizon
-debver: 25.3.0-2
-dl_path:
-  name: horizon-debian-25.3.0-2.tar.gz
-  url: https://salsa.debian.org/openstack-team/services/horizon/-/archive/debian/25.3.0-2/horizon-debian-25.3.0-2.tar.gz
-  md5sum: 1e239dc00f7c98041886a00dfe653ad2
+debver: 25.3.0-3+deb13u1
+dl_hook: dl_hook
+dl_files:
+  horizon-orig.tar.xz:
+    topdir: null
+    url: https://snapshot.debian.org/archive/debian/20260925T082640Z/pool/main/h/horizon/horizon_25.3.0.orig.tar.xz
+    sha256sum: 85186d0da28fcdaef62b17b462dbaf0f8229c96686ae24e07b9e70b4b7751fdb
+  horizon-debian.tar.xz:
+    topdir: null
+    url: https://snapshot.debian.org/archive/debian/20260925T082640Z/pool/main/h/horizon/horizon_25.3.0-3+deb13u1.debian.tar.xz
+    sha256sum: f0c094b6fd447151a3ce82b86a198a37f5ba5280c91c8e0191e225f1320ab4de
 src_files:
   - files/guni_config.py
   - files/horizon-assets-compress

@@ -1,7 +1,8 @@
 ---
 debname: barbican
-debver: 20.0.0-2
-archive: https://snapshot.debian.org/archive/debian/20250630T203427Z/pool/main/b/barbican/
+debver: 20.0.0-3
+archive: https://snapshot.debian.org/archive/debian/20260925T082640Z/pool/main/b/barbican/
+dsc_sha256: eebf3a06b111a0590e3a0047ab623de33d9384bb7195774d9e0c90b53f6bb97a
 revision:
   dist: $STX_DIST
   GITREVCOUNT:
