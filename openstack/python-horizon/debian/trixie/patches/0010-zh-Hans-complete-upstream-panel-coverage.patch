@@ -1,137 +1,179 @@
 From 74cbc33dbf77a9415e4cc6d370cb6fdad4d2ec52 Mon Sep 17 00:00:00 2001
 From: Felipe Vasconcelos <Felipe.Vasconcelos@windriver.com>
 Date: Thu, 5 Nov 2026 09:38:03 -0300
-Subject: [PATCH] zh-Hans enablement: catalog slots for credential panels and
- delete-confirm dialog
+Subject: [PATCH] zh-Hans: complete credential-panel, delete-confirm and
+ openstack_auth coverage
 
-Create the Simplified Chinese (zh_Hans) message-catalog slots for the
-Identity and Settings Credentials / User Credentials panels, the
-Application Credentials create help paragraphs, and the two
-delete-confirmation djangojs msgids used by the confirm dialog; and
-un-fuzzy the Role/Roles plural so the AngularJS Roles panel title renders
-with upstream's own existing translation.
+Supply first-pass Simplified Chinese (zh_Hans) translations for strings
+that the shipped 25.3.0 zh_Hans catalogs lack: the Identity and Settings
+Credentials / User Credentials panels, the Application Credentials create
+help paragraphs, the two delete-confirmation djangojs msgids used by the
+confirm dialog, and five openstack_auth messages (TOTP passcode and
+authentication prompts, cookie hint, system-scope switch messages),
+and two messages added by StarlingX's own Horizon patches (the
+auto-refresh failure notice and the protected-object delete error),
+plus upstream strings on platform screens that the 25.3.0 catalogs
+lack (system-scope context menu, user-credential delete actions,
+locked-password message, TOTP form title, numbered pagination).
+Also un-fuzzy the Role/Roles plural so the AngularJS Roles panel title
+renders with upstream's own existing translation.
 
-These strings are wrapped in the Horizon source but absent from the
-shipped 25.3.0 zh_Hans catalogs, and the Debian build compiles the shipped
-.po without merging the extraction template, so without these slots the
-strings cannot be translated by anyone. All new msgstr are left empty: the
-strings keep English fallback today and become translatable by the
-localization workflow. No translation content is authored here.
+The Debian build compiles the shipped .po without merging the extraction
+template, so these strings need explicit entries in the shipped catalogs.
+The openstack_auth entries are appended to the existing catalog; the
+patch modifies that file and must not create it.
+
+The translations are an AI-assisted first pass and are not releasable
+until a native-language review approves them.
 
 Signed-off-by: Felipe Vasconcelos <Felipe.Vasconcelos@windriver.com>
 ---
- horizon/locale/zh_Hans/LC_MESSAGES/djangojs.po            |   7 +
- openstack_dashboard/locale/zh_Hans/LC_MESSAGES/django.po  | 131 ++++++++++++++
- openstack_dashboard/locale/zh_Hans/LC_MESSAGES/djangojs.po |  1 -
- 3 files changed, 137 insertions(+), 1 deletion(-)
+ horizon/locale/zh_Hans/LC_MESSAGES/djangojs.po             |  10 ++++++++++
+ horizon/locale/zh_Hans/LC_MESSAGES/django.po               |  21 +++++++++++++++++++++
+ openstack_dashboard/locale/zh_Hans/LC_MESSAGES/django.po   | 151 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+ openstack_dashboard/locale/zh_Hans/LC_MESSAGES/djangojs.po |   1 -
+ openstack_auth/locale/zh_Hans/LC_MESSAGES/django.po        |  16 ++++++++++++++++
+ 5 files changed, 198 insertions(+), 1 deletion(-)
 
 diff --git a/horizon/locale/zh_Hans/LC_MESSAGES/djangojs.po b/horizon/locale/zh_Hans/LC_MESSAGES/djangojs.po
-index db6578e..5c916bc 100644
+index db6578e..93c8a8f 100644
 --- a/horizon/locale/zh_Hans/LC_MESSAGES/djangojs.po
 +++ b/horizon/locale/zh_Hans/LC_MESSAGES/djangojs.po
-@@ -499,3 +499,10 @@ msgstr "{$viewValue$} 不是 {$schema.multipleOf$} 的倍数"
+@@ -499,3 +499,13 @@ msgstr "{$viewValue$} 不是 {$schema.multipleOf$} 的倍数"
  
  msgid "{$viewValue$} is not a valid number"
  msgstr "{$viewValue$} 不是一个有效数字"
 +
 +msgid "This action cannot be undone."
-+msgstr ""
++msgstr "这个动作不能撤消。"
 +
 +#, python-format
 +msgid "You have selected: %s."
++msgstr "您已选择了 %s。"
++
++msgid "Failed to auto refresh page, retrying on next interval."
++msgstr "自动刷新页面失败，将在下一个刷新周期重试。"
+diff --git a/horizon/locale/zh_Hans/LC_MESSAGES/django.po b/horizon/locale/zh_Hans/LC_MESSAGES/django.po
+index de4efd1..21c0694 100644
+--- a/horizon/locale/zh_Hans/LC_MESSAGES/django.po
++++ b/horizon/locale/zh_Hans/LC_MESSAGES/django.po
+@@ -410,3 +410,24 @@ msgstr "您已选择了 [[selection]]。 "
+ 
+ msgid "to"
+ msgstr "到"
++
++#, python-format
++msgid ""
++"You are forbidden to %(action_present)s: %(objs)s. The selected %(objs)s "
++"are system-critical and cannot be %(action_past)s. Please contact your "
++"administrator for further assistance."
 +msgstr ""
++"您无权%(action_present)s：%(objs)s。所选的 %(objs)s 是系统关键对象，"
++"不能执行该操作（%(action_past)s）。如需进一步帮助，请联系管理员。"
++
++msgid "TOTP authentification"
++msgstr "TOTP 认证"
++
++msgid "&laquo;&laquo;&nbsp;First"
++msgstr "&laquo;&laquo;&nbsp;首页"
++
++msgid "&laquo;&nbsp;Prev&nbsp;"
++msgstr "&laquo;&nbsp;前页&nbsp;"
++
++msgid "Last&nbsp;&raquo;&raquo;"
++msgstr "末页&nbsp;&raquo;&raquo;"
 diff --git a/openstack_dashboard/locale/zh_Hans/LC_MESSAGES/django.po b/openstack_dashboard/locale/zh_Hans/LC_MESSAGES/django.po
-index c3dfff4..259adc6 100644
+index c3dfff4..0f3471d 100644
 --- a/openstack_dashboard/locale/zh_Hans/LC_MESSAGES/django.po
 +++ b/openstack_dashboard/locale/zh_Hans/LC_MESSAGES/django.po
-@@ -8191,3 +8191,134 @@ msgstr "启动"
+@@ -8191,3 +8191,154 @@ msgstr "启动"
  
  msgid "yes"
  msgstr "是"
 +
 +msgid "Credentials"
-+msgstr ""
++msgstr "凭证"
 +
 +msgid "User Credentials"
-+msgstr ""
++msgstr "用户凭证"
 +
 +msgid "Create Credential"
-+msgstr ""
++msgstr "创建凭证"
 +
 +msgid "Create User Credential"
-+msgstr ""
++msgstr "创建用户凭证"
 +
 +msgid "Update Credential"
-+msgstr ""
++msgstr "更新凭证"
 +
 +msgid "Update User Credential"
-+msgstr ""
++msgstr "更新用户凭证"
 +
 +msgid "Edit User Credential"
-+msgstr ""
++msgstr "编辑用户凭证"
 +
 +msgid "Create a new credential."
-+msgstr ""
++msgstr "创建新的凭证。"
 +
 +msgid "Create a new user credential."
-+msgstr ""
++msgstr "创建新的用户凭证。"
 +
 +msgid "Edit the credential's details."
-+msgstr ""
++msgstr "编辑凭证的详细信息。"
 +
 +msgid "Deleted user credentials are not recoverable."
-+msgstr ""
++msgstr "已删除的用户凭证无法恢复。"
 +
 +msgid "Unable to retrieve users credentials list."
-+msgstr ""
++msgstr "无法获取用户凭证列表。"
 +
 +msgid "User credential created successfully."
-+msgstr ""
++msgstr "用户凭证创建成功。"
 +
 +msgid "User credential updated successfully."
-+msgstr ""
++msgstr "用户凭证更新成功。"
 +
 +msgid "Unable to create user credential."
-+msgstr ""
++msgstr "无法创建用户凭证。"
 +
 +msgid "Unable to update user credential."
-+msgstr ""
++msgstr "无法更新用户凭证。"
 +
 +msgid "Data"
-+msgstr ""
++msgstr "数据"
 +
 +msgid "User"
-+msgstr ""
++msgstr "用户"
 +
 +msgid "cert"
-+msgstr ""
++msgstr "证书"
 +
 +msgid "Access Rules"
-+msgstr ""
++msgstr "访问规则"
 +
 +msgid "Method"
-+msgstr ""
++msgstr "方法"
 +
 +msgid "Path"
-+msgstr ""
++msgstr "路径"
 +
 +msgid ""
 +"Project limits the scope of the credential. It is is mandatory if the "
 +"credential type is EC2."
-+msgstr ""
++msgstr "项目限定了凭证的作用范围。当凭证类型为 EC2 时，此项为必填。"
 +
 +#, python-brace-format
 +msgid ""
 +"If the credential type is EC2, credential data has to be <tt>{\"access\":"
 +" &lt;access&gt;, \"secret\": &lt;secret&gt;}</tt>."
-+msgstr ""
++msgstr "如果凭证类型为 EC2，凭证数据必须为 <tt>{\"access\": &lt;access&gt;, \"secret\": &lt;secret&gt;}</tt>。"
 +
 +msgid ""
 +"<b>Secret</b>: You may provide your own secret, or one will be generated "
 +"for you. Once your application credential is created, the secret will be "
 +"revealed once. If you lose the secret, you will have to generate a new "
 +"application credential."
-+msgstr ""
++msgstr "<b>密码</b>：您可以提供自己的密码，或由系统为您生成一个。应用程序凭证创建后，密码仅显示一次。如果您丢失了该密码，则必须创建新的应用程序凭证。"
 +
 +msgid ""
 +"<b>Expiration Date/Time</b>: You may give the application credential an "
@@ -139,13 +181,13 @@ index c3dfff4..259adc6 100644
 +"date with no expiration time, the time will be assumed to be 00:00:00. If"
 +" you provide an expiration time with no expiration date, the date will be"
 +" assumed to be today."
-+msgstr ""
++msgstr "<b>过期日期/时间</b>：您可以为应用程序凭证设置过期时间。过期时间以 UTC 为准。如果您只提供过期日期而不提供过期时间，则时间默认为 00:00:00。如果您只提供过期时间而不提供过期日期，则日期默认为今天。"
 +
 +msgid ""
 +"<b>Roles</b>: You may select one or more roles for this application "
 +"credential. If you do not select any, all of the roles you have assigned "
 +"on the current project will be applied to the application credential."
-+msgstr ""
++msgstr "<b>角色</b>：您可以为此应用程序凭证选择一个或多个角色。如果不选择任何角色，则当前项目中分配给您的所有角色都将应用于该应用程序凭证。"
 +
 +#, python-brace-format
 +msgid ""
@@ -158,7 +200,7 @@ index c3dfff4..259adc6 100644
 +"&nbsp;&nbsp;\"path\": \"/v2.1/servers\"} <br /> ] <br /> </code> or: <br "
 +"/> <code> - service: compute <br /> &nbsp;&nbsp;method: POST <br /> "
 +"&nbsp;&nbsp;path: /v2.1/servers </code>"
-+msgstr ""
++msgstr "<b>访问规则</b>：如果您需要更精细的访问控制委派，可以为此应用程序凭证创建一条或多条访问规则。访问规则列表必须是 JSON 或 YAML 格式的规则列表，每条规则包含一个服务类型、一个 HTTP 方法和一个 URL 路径，例如：<br /> <code> [ <br /> &nbsp;&nbsp;{\"service\": \"compute\", <br /> &nbsp;&nbsp;\"method\": \"POST\", <br /> &nbsp;&nbsp;\"path\": \"/v2.1/servers\"} <br /> ] <br /> </code> 或：<br /> <code> - service: compute <br /> &nbsp;&nbsp;method: POST <br /> &nbsp;&nbsp;path: /v2.1/servers </code>"
 +
 +msgid ""
 +"<b>Unrestricted</b>: By default, for security reasons, application "
@@ -166,19 +208,39 @@ index c3dfff4..259adc6 100644
 +"application credentials or keystone trusts. If your application "
 +"credential needs to be able to perform these actions, check "
 +"\"unrestricted\"."
-+msgstr ""
++msgstr "<b>未限制</b>：出于安全原因，默认情况下禁止使用应用程序凭证创建其他应用程序凭证或 keystone 信任。如果您的应用程序凭证需要执行这些操作，请勾选“未限制”。"
 +
 +msgid "Access rules must be a valid JSON or YAML list."
-+msgstr ""
++msgstr "访问规则必须是有效的 JSON 或 YAML 列表。"
 +
 +msgid ""
 +"<b>Kubernetes Namespace</b>: You can optionally provide a Kubernetes "
 +"Namespace. It will be included in the kubeconfig file which can be "
 +"downloaded from the next screen."
-+msgstr ""
++msgstr "<b>Kubernetes 命名空间</b>：您可以选择性地提供一个 Kubernetes 命名空间。它将包含在 kubeconfig 文件中，可在下一屏幕中下载。"
 +
 +msgid "Lock password"
-+msgstr ""
++msgstr "锁定密码"
++
++msgid "Delete User Credential"
++msgid_plural "Delete User Credentials"
++msgstr[0] "删除用户凭证"
++
++msgid "Deleted User Credential"
++msgid_plural "Deleted User Credentials"
++msgstr[0] "已删除用户凭证"
++
++msgid "Unable to retrieve the credentials of this user."
++msgstr "无法获取该用户的凭证。"
++
++msgid "Password is locked."
++msgstr "密码已锁定。"
++
++msgid "system scope"
++msgstr "系统范围"
++
++msgid "Systems:"
++msgstr "系统："
 diff --git a/openstack_dashboard/locale/zh_Hans/LC_MESSAGES/djangojs.po b/openstack_dashboard/locale/zh_Hans/LC_MESSAGES/djangojs.po
 index 3266f71..9fcdc60 100644
 --- a/openstack_dashboard/locale/zh_Hans/LC_MESSAGES/djangojs.po
@@ -191,6 +253,30 @@ index 3266f71..9fcdc60 100644
  msgid "Role"
  msgid_plural "Roles"
  msgstr[0] "角色"
+diff --git a/openstack_auth/locale/zh_Hans/LC_MESSAGES/django.po b/openstack_auth/locale/zh_Hans/LC_MESSAGES/django.po
+index 62fd788..881a362 100644
+--- a/openstack_auth/locale/zh_Hans/LC_MESSAGES/django.po
++++ b/openstack_auth/locale/zh_Hans/LC_MESSAGES/django.po
+@@ -117,3 +117,19 @@ msgstr "您没有任何授权的项目或者域。"
+ 
+ msgid "Your password has expired. Please set a new password."
+ msgstr "您的密码已过期。请设置一个新密码。"
++
++msgid "Passcode"
++msgstr "验证码"
++
++msgid "Authentication via TOTP is required."
++msgstr "需要通过 TOTP 进行认证。"
++
++msgid "Cookies may be turned off. Make sure cookies are enabled and try again."
++msgstr "Cookie 可能已被关闭。请确保已启用 Cookie，然后重试。"
++
++#, python-format
++msgid "System switch failed for user \"%(username)s\"."
++msgstr "用户 \"%(username)s\" 切换到系统范围失败。"
++
++msgid "Switch to system scope successful."
++msgstr "已成功切换到系统范围。"
 -- 
 2.43.0
 
